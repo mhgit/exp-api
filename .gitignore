@@ -35,3 +35,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# Config never checked in
+/etc/eagle-bank/
+**/application.conf
+!**/application.conf.template
+
+
