@@ -33,9 +33,7 @@ replay_pid*
 
 # Gradle
 .gradle/
-gradlew
-gradlew.bat
-gradle-wrapper.properties
+
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
