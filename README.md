@@ -1,6 +1,7 @@
 ## Installation
 
 1. Clone the repository
+2. Setup the gradle wrapper: ```gradle wrapper```
 2. Run the setup script to create the configuration:
    ```bash
    ./scripts/setup.sh
