@@ -2,6 +2,8 @@ plugins {
     kotlin("jvm") version "1.9.21"
     kotlin("plugin.serialization") version "1.9.21"
     application
+    jacoco
+
 }
 
 group = "com.eaglebank.api"
@@ -53,7 +55,33 @@ tasks.test {
         showStandardStreams = true
         showStackTraces = true
     }
+    finalizedBy(tasks.jacocoTestReport)
 }
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)  // Tests are required before generating the report
+    reports {
+        xml.required.set(true)  // Enable XML report for CI tools
+        csv.required.set(false)
+        html.required.set(true)
+    }
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                exclude(
+                    "**/dto/**",
+                    "**/infrastructure/di/**",
+                    "**/Application*",
+                    "**/config/**"
+                )
+            }
+        })
+    )
+
+
+}
+
+
 
 kotlin {
     jvmToolchain(17)
