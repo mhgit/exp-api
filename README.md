@@ -1,2 +1,2 @@
 # exp-api
-Experiment with remove devlopment.
+Experiment with remote development.
