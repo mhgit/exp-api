@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Create configuration directory
-sudo mkdir -p /etc/eagle-bank
+mkdir -p ./etc/eagle-bank
 
 # Generate a random JWT secret
 JWT_SECRET=$(openssl rand -base64 32)
 
 # Create the configuration file
-sudo tee /etc/eagle-bank/application.conf << EOF
+tee ./etc/eagle-bank/application-dev.conf << EOF
 ktor {
     deployment {
         port = 8080
@@ -33,5 +33,4 @@ jwt {
 EOF
 
 # Set proper permissions
-sudo chown root:root /etc/eagle-bank/application.conf
-sudo chmod 600 /etc/eagle-bank/application.conf
+chmod 644 ./etc/eagle-bank/application-dev.conf

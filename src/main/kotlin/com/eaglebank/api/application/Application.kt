@@ -1,38 +1,25 @@
-package com.eaglebank.api
+package com.eaglebank.api.application
 
-import com.typesafe.config.ConfigFactory
+import com.eaglebank.api.infrastructure.di.serviceModule
+import com.eaglebank.api.presentation.routes.usersRoute
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
+import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.routing.routing
 import com.typesafe.config.Config
-import java.io.File
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
 import com.eaglebank.api.infrastructure.security.configureSecurity
 
 
-fun main() {
-    val config = ConfigFactory.systemProperties()
-        .withFallback(ConfigFactory.systemEnvironment())
-        .withFallback(ConfigFactory.load())
-        .withFallback(ConfigFactory.parseFile(File("/etc/eagle-bank/application.conf")))
-        .resolve()
-
-    embeddedServer(
-        Netty,
-        port = config.getInt("ktor.deployment.port"),
-        host = "0.0.0.0",
-        module = { module(config) }
-    ).start(wait = true)
-
-}
-
-
 fun Application.module(config: Config) {
+    install(Koin) {
+        slf4jLogger()
+        modules(serviceModule)
+    }
+
     configureSerialization()
     configureSecurity(config)
     configureRouting()
@@ -48,6 +35,7 @@ fun Application.configureSerialization() {
 fun Application.configureRouting() {
     routing {
         // Routes will be added here
+        usersRoute()
         swaggerUI(path = "swagger", swaggerFile = "api-contract.yml")
     }
 }

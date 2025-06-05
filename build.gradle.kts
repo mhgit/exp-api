@@ -14,6 +14,7 @@ repositories {
 val ktor_version = "2.3.7"
 val kotlinx_serialization_version = "1.6.2"
 val logback_version = "1.4.11"
+val koin_version = "3.5.3"
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -25,6 +26,8 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
     implementation("io.ktor:ktor-server-openapi:$ktor_version")
     implementation("io.ktor:ktor-server-swagger:$ktor_version")
+    implementation("io.insert-koin:koin-ktor:$koin_version")
+    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
 
     // Ktor security
     implementation("io.ktor:ktor-server-auth:$ktor_version")
@@ -38,13 +41,18 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     
     // Testing
-    testImplementation("io.ktor:ktor-server-test-host:$ktor_version")
     testImplementation(kotlin("test"))
 
-    // JWT dependencies
-    implementation("io.ktor:ktor-server-auth:$ktor_version")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktor_version")
-    implementation("com.auth0:java-jwt:4.4.0")
+
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+        showStackTraces = true
+    }
 }
 
 kotlin {

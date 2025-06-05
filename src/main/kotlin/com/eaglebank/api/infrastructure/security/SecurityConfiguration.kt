@@ -39,8 +39,11 @@ fun Application.configureSecurity(config: Config) {
                     JWTPrincipal(credential.payload)
                 } else null
             }
-            challenge { defaultScheme, realm ->
-                call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Token is not valid or has expired"))
+            challenge { _, realm ->
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ErrorResponse("Token is not valid or has expired")
+                )
             }
         }
     }
@@ -106,7 +109,7 @@ fun Application.configureSecurity(config: Config) {
                 )
 
                 call.respond(RefreshTokenResponse(newToken))
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Invalid or expired refresh token"))
             }
         }
