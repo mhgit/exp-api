@@ -1,5 +1,5 @@
 
-package com.eaglebank.api.presentation.routes
+package com.eaglebank.api.presentation.route
 
 import com.eaglebank.api.infra.validation.SimpleUserRequestValidationService
 

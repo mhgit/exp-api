@@ -12,38 +12,69 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+    }
+    maven {
+        url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+    }
 }
 
-val kotlinx_serialization_version = "1.6.2"
-val logback_version = "1.5.13"
-val koin_version = "3.5.3"
+val kotlinxSerializationVersion = "1.6.2"
+val logbackVersion = "1.5.13"
+val koinVersion = "4.1.0-RC1"
+val ktorVersion = "3.1.3"
+val kotlinVersion = "2.1.21"
 
+
+val mockkVersion = "1.14.2"
 dependencies {
     implementation(kotlin("stdlib"))
-    
+
     // Ktor server dependencies
-    implementation("io.ktor:ktor-server-core")
-    implementation("io.ktor:ktor-server-netty")
+    implementation(project.dependencies.platform("io.insert-koin:koin-bom:$koinVersion"))
+    implementation(project.dependencies.platform("io.ktor:ktor-bom:$ktorVersion"))
+    implementation("io.insert-koin:koin-core")
+    implementation("io.ktor:ktor-server-status-pages")
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("io.ktor:ktor-server-openapi")
     implementation("io.ktor:ktor-server-swagger")
-    implementation("io.insert-koin:koin-ktor:$koin_version")
-    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
+    implementation("io.ktor:ktor-server-config-yaml")
+    implementation("io.insert-koin:koin-ktor")
+    implementation("io.insert-koin:koin-logger-slf4j")
+    implementation("com.typesafe:config:1.4.3")
+
 
     // Ktor security
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation("io.ktor:ktor-server-sessions")
-    
+
     // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version")
-    
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
+
     // Logging
-    implementation("ch.qos.logback:logback-classic:$logback_version")
-    
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
     // Testing
     testImplementation(kotlin("test"))
+    testImplementation("io.ktor:ktor-server-test-host-jvm")
+    testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    implementation("io.insert-koin", "koin-ktor")
+    implementation("io.insert-koin", "koin-logger-slf4j")
+    testImplementation("io.insert-koin", "koin-test-junit5") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-test-junit")
+    }
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-test-junit")
+    }
+
+    testImplementation("io.ktor:ktor-client-content-negotiation")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
 
 }
@@ -88,5 +119,5 @@ kotlin {
 }
 
 application {
-    mainClass.set("com.eaglebank.api.ApplicationKt")
+    mainClass.set("com.eaglebank.api.application.ApplicationKt")
 }

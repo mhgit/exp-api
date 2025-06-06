@@ -14,7 +14,7 @@ ktor {
         port = \${?PORT}
     }
     application {
-        modules = [ com.eaglebank.api.ApplicationKt.module ]
+        modules = [ com.eaglebank.api.application.ApplicationKt.kt ]
     }
 }
 
