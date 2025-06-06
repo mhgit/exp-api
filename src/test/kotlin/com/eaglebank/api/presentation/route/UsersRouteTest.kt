@@ -2,7 +2,7 @@ package com.eaglebank.api.route
 
 import com.eaglebank.api.application.configureOpenAPI
 import com.eaglebank.api.application.configureRouting
-import com.eaglebank.api.application.configureSecurity
+import com.eaglebank.api.infra.security.configureSecurity
 import com.eaglebank.api.infra.di.serviceModule
 import com.eaglebank.api.infra.validation.UserRequestValidationService
 import com.eaglebank.api.presentation.dto.*

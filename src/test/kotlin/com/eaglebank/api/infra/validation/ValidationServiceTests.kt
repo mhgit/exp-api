@@ -23,7 +23,7 @@ class ValidationServiceTest {
     private val validRequest = CreateUserRequest(
         name = "John Doe",
         email = "john.doe@example.com",
-        phoneNumber = "+44-1234-5678",
+        phoneNumber = "+441234567899999",
         address = validAddress
     )
 
@@ -105,8 +105,8 @@ class ValidationServiceTest {
         @DisplayName("should reject invalid phone number formats")
         fun `should reject invalid phone number formats`() {
             val invalidPhones = listOf(
-                "12345678",
-                "+44-123-5678",
+                "+1234567891234569",
+                "+04-123-5678",
                 "44-1234-5678",
                 "+44-12345-5678",
                 "+442-1234-5678"
