@@ -1,5 +1,5 @@
 
-package com.eaglebank.api.infrastructure.security
+package com.eaglebank.api.infra.security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
