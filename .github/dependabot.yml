@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # Enable version updates for Gradle/Maven
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    open-pull-requests-limit: 10
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "gradle"
+    ignore:
+    # Optional: ignore patch updates for specific packages
+    # - dependency-name: "org.jetbrains.kotlin.*"
+    #   update-types: ["version-update:semver-patch"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "github-actions"

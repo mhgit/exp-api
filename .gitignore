@@ -1,5 +1,10 @@
-# idea
-.idea
+# IDE-specific files
+.idea/
+*.iml
+
+# Generated config
+etc/
+
 
 # Compiled class file
 *.class
@@ -25,3 +30,17 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Gradle
+.gradle/
+
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Config never checked in
+/etc/eagle-bank/
+**/application.conf
+!**/application.conf.template
+
+
