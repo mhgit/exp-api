@@ -3,8 +3,11 @@ package com.eaglebank.api.route
 import com.eaglebank.api.application.module
 import com.eaglebank.api.infra.validation.UserRequestValidationService
 import com.eaglebank.api.presentation.dto.Address
+import com.eaglebank.api.presentation.dto.BadRequestErrorResponse
 import com.eaglebank.api.presentation.dto.CreateUserRequest
 import com.eaglebank.api.presentation.dto.UserResponse
+import com.eaglebank.api.presentation.dto.ValidationDetail
+import com.eaglebank.api.presentation.dto.ValidationType
 import com.eaglebank.api.util.withConfig
 import com.typesafe.config.ConfigFactory
 import io.ktor.client.call.*
@@ -22,19 +25,21 @@ import org.koin.dsl.module
 import org.koin.test.KoinTest
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
+@DisplayName("Test suite for the UsersRoute")
 class UsersRouteTest : KoinTest {
     private val config = withConfig(
         ConfigFactory.load("application-test.conf")
     ) {
-        // You can override or add test-specific configurations here if needed
+        // Override or add test-specific configurations here if needed
         it
     }
 
     private val USERS_ENDPOINT = "/v1/users"
 
     @Test
-    @DisplayName("Test: Creating a user with a valid request body should succeed")
+    @DisplayName("Creating a user with a valid request body should succeed")
     fun testCreateUserRequestRoot_withValidRequestBody_succeeds() = testApplication {
         application {
             module(config)
@@ -62,12 +67,84 @@ class UsersRouteTest : KoinTest {
         assertEquals(expectedPhoneNumber, userResponse.phoneNumber)
     }
 
+    @Test
+    @DisplayName("Creating a user with a missing required field should return BadRequest")
+    fun testCreateUserRequest_missingRequiredField_returnsBadRequest() = testApplication {
+        application {
+            module(config)
+            configureKoinModuleWithMocksForMissingField()
+        }
+
+        val createUserRequest = CreateUserRequestBuilder().withName("").build() // Simulate missing name
+        val client = createHttpClient()
+
+        val response = client.post(USERS_ENDPOINT) {
+            contentType(ContentType.Application.Json)
+            setBody(createUserRequest)
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        val errorResponse = response.body<BadRequestErrorResponse>()
+        assertNotNull(errorResponse.details)
+        assertTrue(errorResponse.details.any { it.field == "name" && it.type == ValidationType.REQUIRED_FIELD.name })
+    }
+
+    @Test
+    @DisplayName("Creating a user with an invalid format field should return BadRequest")
+    fun testCreateUserRequest_invalidFormatField_returnsBadRequest() = testApplication {
+        application {
+            module(config)
+            configureKoinModuleWithMocksForInvalidFormat()
+        }
+
+        val createUserRequest = CreateUserRequestBuilder().withEmail("invalid-email-format").build()
+        val client = createHttpClient()
+
+        val response = client.post(USERS_ENDPOINT) {
+            contentType(ContentType.Application.Json)
+            setBody(createUserRequest)
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        val errorResponse = response.body<BadRequestErrorResponse>()
+        assertNotNull(errorResponse.details)
+        assertTrue(errorResponse.details.any { it.field == "email" && it.type == ValidationType.INVALID_FORMAT.name })
+    }
+
     private fun configureKoinModuleWithMocks() {
         org.koin.core.context.loadKoinModules(
             module {
                 single<UserRequestValidationService>() {
                     mockk<UserRequestValidationService> {
                         every { validateCreateUserRequest(any()) } returns emptyList()
+                    }
+                }
+            }
+        )
+    }
+
+    private fun configureKoinModuleWithMocksForMissingField() {
+        org.koin.core.context.loadKoinModules(
+            module {
+                single<UserRequestValidationService>() {
+                    mockk<UserRequestValidationService> {
+                        every { validateCreateUserRequest(any()) } returns listOf(
+                            ValidationDetail.required("name")
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    private fun configureKoinModuleWithMocksForInvalidFormat() {
+        org.koin.core.context.loadKoinModules(
+            module {
+                single<UserRequestValidationService>() {
+                    mockk<UserRequestValidationService> {
+                        every { validateCreateUserRequest(any()) } returns listOf(
+                            ValidationDetail.invalidFormat("email")
+                        )
                     }
                 }
             }

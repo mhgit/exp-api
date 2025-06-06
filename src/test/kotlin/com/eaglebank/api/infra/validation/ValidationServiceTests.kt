@@ -1,4 +1,3 @@
-
 package com.eaglebank.api.infra.validation
 
 import com.eaglebank.api.presentation.dto.Address
@@ -6,9 +5,11 @@ import com.eaglebank.api.presentation.dto.CreateUserRequest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName // Import DisplayName
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@DisplayName("Test suite for the Validation Service Tests") // Display name for the test class
 class ValidationServiceTest {
     private lateinit var validationService: SimpleUserRequestValidationService
 
@@ -32,14 +33,17 @@ class ValidationServiceTest {
     }
 
     @Nested
+    @DisplayName("Name Validation") // Display name for the nested class
     inner class NameValidation {
         @Test
+        @DisplayName("should accept valid name") // Display name for the test method
         fun `should accept valid name`() {
             val result = validationService.validateCreateUserRequest(validRequest)
             assertTrue(result.none { it.field == "name" })
         }
 
         @Test
+        @DisplayName("should reject empty name")
         fun `should reject empty name`() {
             val request = validRequest.copy(name = "")
             val result = validationService.validateCreateUserRequest(request)
@@ -48,6 +52,7 @@ class ValidationServiceTest {
         }
 
         @Test
+        @DisplayName("should reject blank name")
         fun `should reject blank name`() {
             val request = validRequest.copy(name = "   ")
             val result = validationService.validateCreateUserRequest(request)
@@ -57,8 +62,10 @@ class ValidationServiceTest {
     }
 
     @Nested
+    @DisplayName("Email Validation")
     inner class EmailValidation {
         @Test
+        @DisplayName("should accept valid email")
         fun `should accept valid email`() {
             val invalidEmails = listOf(
                 "invalid-email",
@@ -85,14 +92,17 @@ class ValidationServiceTest {
     }
 
     @Nested
+    @DisplayName("Phone Number Validation")
     inner class PhoneNumberValidation {
         @Test
+        @DisplayName("should accept valid phone number")
         fun `should accept valid phone number`() {
             val result = validationService.validateCreateUserRequest(validRequest)
             assertTrue(result.none { it.field == "phoneNumber" })
         }
 
         @Test
+        @DisplayName("should reject invalid phone number formats")
         fun `should reject invalid phone number formats`() {
             val invalidPhones = listOf(
                 "12345678",
@@ -112,14 +122,17 @@ class ValidationServiceTest {
     }
 
     @Nested
+    @DisplayName("Address Validation")
     inner class AddressValidation {
         @Test
+        @DisplayName("should accept valid address")
         fun `should accept valid address`() {
             val result = validationService.validateCreateUserRequest(validRequest)
             assertTrue(result.none { it.field.startsWith("address") })
         }
 
         @Test
+        @DisplayName("should reject empty line1")
         fun `should reject empty line1`() {
             val invalidAddress = validAddress.copy(line1 = "")
             val request = validRequest.copy(address = invalidAddress)
@@ -129,6 +142,7 @@ class ValidationServiceTest {
         }
 
         @Test
+        @DisplayName("should accept optional line2 and line3")
         fun `should accept optional line2 and line3`() {
             val address = validAddress.copy(line2 = null, line3 = null)
             val request = validRequest.copy(address = address)
@@ -138,6 +152,7 @@ class ValidationServiceTest {
         }
 
         @Test
+        @DisplayName("should reject empty town")
         fun `should reject empty town`() {
             val invalidAddress = validAddress.copy(town = "")
             val request = validRequest.copy(address = invalidAddress)
@@ -147,6 +162,7 @@ class ValidationServiceTest {
         }
 
         @Test
+        @DisplayName("should reject empty county")
         fun `should reject empty county`() {
             val invalidAddress = validAddress.copy(county = "")
             val request = validRequest.copy(address = invalidAddress)
@@ -156,6 +172,7 @@ class ValidationServiceTest {
         }
 
         @Test
+        @DisplayName("should validate postcode format")
         fun `should validate postcode format`() {
             val validPostcodes = listOf(
                 "SW1A 1AA",
@@ -191,6 +208,7 @@ class ValidationServiceTest {
     }
 
     @Test
+    @DisplayName("should return multiple validation errors when multiple fields are invalid")
     fun `should return multiple validation errors when multiple fields are invalid`() {
         val invalidAddress = Address(
             line1 = "",
