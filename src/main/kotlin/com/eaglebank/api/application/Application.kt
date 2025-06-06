@@ -1,7 +1,7 @@
 package com.eaglebank.api.application
 
 import com.eaglebank.api.infra.di.serviceModule
-import com.eaglebank.api.presentation.routes.usersRoute
+import com.eaglebank.api.presentation.route.usersRoute
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
