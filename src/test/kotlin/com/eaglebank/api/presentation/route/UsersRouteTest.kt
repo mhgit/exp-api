@@ -1,53 +1,95 @@
 package com.eaglebank.api.route
 
-import com.eaglebank.api.application.module
+import com.eaglebank.api.application.configureOpenAPI
+import com.eaglebank.api.application.configureRouting
+import com.eaglebank.api.application.configureSecurity
+import com.eaglebank.api.infra.di.serviceModule
 import com.eaglebank.api.infra.validation.UserRequestValidationService
-import com.eaglebank.api.presentation.dto.Address
-import com.eaglebank.api.presentation.dto.BadRequestErrorResponse
-import com.eaglebank.api.presentation.dto.CreateUserRequest
-import com.eaglebank.api.presentation.dto.UserResponse
-import com.eaglebank.api.presentation.dto.ValidationDetail
-import com.eaglebank.api.presentation.dto.ValidationType
+import com.eaglebank.api.presentation.dto.*
 import com.eaglebank.api.util.withConfig
 import com.typesafe.config.ConfigFactory
 import io.ktor.client.call.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.config.*
 import io.ktor.server.testing.*
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.koin.core.context.loadKoinModules
 import org.koin.dsl.module
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
 import org.koin.test.KoinTest
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 @DisplayName("Test suite for the UsersRoute")
 class UsersRouteTest : KoinTest {
     private val config = withConfig(
         ConfigFactory.load("application-test.conf")
     ) {
-        // Override or add test-specific configurations here if needed
         it
     }
 
     private val USERS_ENDPOINT = "/v1/users"
 
-    @Test
-    @DisplayName("Creating a user with a valid request body should succeed")
-    fun testCreateUserRequestRoot_withValidRequestBody_succeeds() = testApplication {
-        application {
-            module(config)
-            configureKoinModuleWithMocks()
+    // Helper function to define the common test application setup
+    private fun runUserTestApplication(
+        mockValidationService: (UserRequestValidationService) -> Unit,
+        block: suspend ApplicationTestBuilder.(client: io.ktor.client.HttpClient) -> Unit
+    ) = testApplication {
+        environment {
+            this.config = HoconApplicationConfig(this@UsersRouteTest.config)
         }
 
+        application {
+            // Manually install Koin first with the serviceModule
+            install(Koin) {
+                slf4jLogger()
+                modules(serviceModule) // Load your actual serviceModule
+            }
+
+            // Load test-specific Koin modules to override, *after* main modules are loaded
+            loadKoinModules(module() {
+                single<UserRequestValidationService> {
+                    mockk<UserRequestValidationService>().also { mockValidationService(it) }
+                }
+            })
+
+            // Explicitly call the configuration functions
+            configureSecurity(environment.config)
+            configureRouting()
+            configureOpenAPI()
+        }
+
+        val client = createClient {
+            // Use the aliased ClientContentNegotiation for the client
+            install(ClientContentNegotiation) {
+                json(Json {
+                    prettyPrint = true
+                    isLenient = true
+                })
+            }
+        }
+
+        block(client)
+    }
+
+    @Test
+    @DisplayName("Creating a user with a valid request body should succeed")
+    fun testCreateUserRequestRoot_withValidRequestBody_succeeds() = runUserTestApplication(
+        mockValidationService = { mock ->
+            every { mock.validateCreateUserRequest(any()) } returns emptyList()
+        }
+    ) { client ->
         val createUserRequest = CreateUserRequestBuilder().build()
-        val client = createHttpClient()
 
         val response = client.post(USERS_ENDPOINT) {
             contentType(ContentType.Application.Json)
@@ -69,14 +111,14 @@ class UsersRouteTest : KoinTest {
 
     @Test
     @DisplayName("Creating a user with a missing required field should return BadRequest")
-    fun testCreateUserRequest_missingRequiredField_returnsBadRequest() = testApplication {
-        application {
-            module(config)
-            configureKoinModuleWithMocksForMissingField()
+    fun testCreateUserRequest_missingRequiredField_returnsBadRequest() = runUserTestApplication(
+        mockValidationService = { mock ->
+            every { mock.validateCreateUserRequest(any()) } returns listOf(
+                ValidationDetail.required("name")
+            )
         }
-
-        val createUserRequest = CreateUserRequestBuilder().withName("").build() // Simulate missing name
-        val client = createHttpClient()
+    ) { client ->
+        val createUserRequest = CreateUserRequestBuilder().withName("").build()
 
         val response = client.post(USERS_ENDPOINT) {
             contentType(ContentType.Application.Json)
@@ -91,14 +133,14 @@ class UsersRouteTest : KoinTest {
 
     @Test
     @DisplayName("Creating a user with an invalid format field should return BadRequest")
-    fun testCreateUserRequest_invalidFormatField_returnsBadRequest() = testApplication {
-        application {
-            module(config)
-            configureKoinModuleWithMocksForInvalidFormat()
+    fun testCreateUserRequest_invalidFormatField_returnsBadRequest() = runUserTestApplication(
+        mockValidationService = { mock ->
+            every { mock.validateCreateUserRequest(any()) } returns listOf(
+                ValidationDetail.invalidFormat("email")
+            )
         }
-
+    ) { client ->
         val createUserRequest = CreateUserRequestBuilder().withEmail("invalid-email-format").build()
-        val client = createHttpClient()
 
         val response = client.post(USERS_ENDPOINT) {
             contentType(ContentType.Application.Json)
@@ -110,63 +152,15 @@ class UsersRouteTest : KoinTest {
         assertNotNull(errorResponse.details)
         assertTrue(errorResponse.details.any { it.field == "email" && it.type == ValidationType.INVALID_FORMAT.name })
     }
-
-    private fun configureKoinModuleWithMocks() {
-        org.koin.core.context.loadKoinModules(
-            module {
-                single<UserRequestValidationService>() {
-                    mockk<UserRequestValidationService> {
-                        every { validateCreateUserRequest(any()) } returns emptyList()
-                    }
-                }
-            }
-        )
-    }
-
-    private fun configureKoinModuleWithMocksForMissingField() {
-        org.koin.core.context.loadKoinModules(
-            module {
-                single<UserRequestValidationService>() {
-                    mockk<UserRequestValidationService> {
-                        every { validateCreateUserRequest(any()) } returns listOf(
-                            ValidationDetail.required("name")
-                        )
-                    }
-                }
-            }
-        )
-    }
-
-    private fun configureKoinModuleWithMocksForInvalidFormat() {
-        org.koin.core.context.loadKoinModules(
-            module {
-                single<UserRequestValidationService>() {
-                    mockk<UserRequestValidationService> {
-                        every { validateCreateUserRequest(any()) } returns listOf(
-                            ValidationDetail.invalidFormat("email")
-                        )
-                    }
-                }
-            }
-        )
-    }
-
-    private fun ApplicationTestBuilder.createHttpClient() = createClient {
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-            })
-        }
-    }
 }
 
 /**
  * Builder class for constructing instances of [CreateUserRequest].
  *
  * This class provides a fluent API for building a [CreateUserRequest] by allowing
- * incremental configuration of its properties. It ensures immutability of the resulting
- * object once it is built.
+ * incremental configuration of its properties.
+ *
+ * It ensures immutability of the resulting object once it is built.
  *
  * Each configuration method applies the specified value to the instance being built and
  * returns the builder object, facilitating method chaining.
