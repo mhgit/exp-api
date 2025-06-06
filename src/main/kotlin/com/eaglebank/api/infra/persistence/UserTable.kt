@@ -1,9 +1,12 @@
 package com.eaglebank.api.infra.persistence
 
-import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.javatime.timestamp
 
-object UserTable : UUIDTable("users") {
+object UserTable : IdTable<String>("users") {
+    override val id = varchar("id", 100).entityId()
+    override val primaryKey = PrimaryKey(id)
+    
     val name = varchar("name", 255)
     val addressLine1 = varchar("address_line1", 255)
     val addressLine2 = varchar("address_line2", 255).nullable()

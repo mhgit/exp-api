@@ -11,10 +11,9 @@ import java.time.Instant
 import java.util.UUID
 
 class UserRepository {
-
     fun createUser(request: CreateUserRequest): UserResponse = transaction {
         val now = Instant.now()
-        val userEntity = UserEntity.new {
+        val userEntity = UserEntity.new(UserEntity.generateUserId()) {
             name = request.name
             addressLine1 = request.address.line1
             addressLine2 = request.address.line2
@@ -30,11 +29,11 @@ class UserRepository {
         userEntity.toUserResponse()
     }
 
-    fun getUserById(id: UUID): UserResponse? = transaction {
+    fun getUserById(id: String): UserResponse? = transaction {
         UserEntity.findById(id)?.toUserResponse()
     }
 
-    fun updateUser(id: UUID, request: UpdateUserRequest): UserResponse? = transaction {
+    fun updateUser(id: String, request: UpdateUserRequest): UserResponse? = transaction {
         UserEntity.findById(id)?.apply {
             request.name?.let { this.name = it }
             request.phoneNumber?.let { this.phoneNumber = it }
@@ -51,7 +50,7 @@ class UserRepository {
         }?.toUserResponse()
     }
 
-    fun deleteUser(id: UUID): Boolean = transaction {
+    fun deleteUser(id: String): Boolean = transaction {
         val deletedRows = UserTable.deleteWhere { UserTable.id eq id }
         deletedRows > 0
     }
