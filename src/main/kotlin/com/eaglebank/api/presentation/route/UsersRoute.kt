@@ -1,13 +1,12 @@
 
 package com.eaglebank.api.presentation.routes
 
-import com.eaglebank.api.infrastructure.validation.ValidationService
+import com.eaglebank.api.infra.validation.SimpleUserRequestValidationService
 
 import com.eaglebank.api.presentation.dto.BadRequestErrorResponse
 import com.eaglebank.api.presentation.dto.CreateUserRequest
 import com.eaglebank.api.presentation.dto.UserResponse
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -17,7 +16,7 @@ import java.time.Instant
 import java.util.*
 
 fun Route.usersRoute() {
-    val validationService: ValidationService by inject()
+    val validationService: SimpleUserRequestValidationService by inject()
 
 
     route("/v1/users") {

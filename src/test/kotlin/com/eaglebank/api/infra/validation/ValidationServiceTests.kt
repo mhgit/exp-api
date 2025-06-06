@@ -1,5 +1,5 @@
 
-package com.eaglebank.api.infrastructure.validation
+package com.eaglebank.api.infra.validation
 
 import com.eaglebank.api.presentation.dto.Address
 import com.eaglebank.api.presentation.dto.CreateUserRequest
@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ValidationServiceTest {
-    private lateinit var validationService: ValidationService
+    private lateinit var validationService: SimpleUserRequestValidationService
 
     private val validAddress = Address(
         line1 = "123 Test Street",
@@ -28,7 +28,7 @@ class ValidationServiceTest {
 
     @BeforeEach
     fun setup() {
-        validationService = ValidationService()
+        validationService = SimpleUserRequestValidationService()
     }
 
     @Nested

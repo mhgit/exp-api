@@ -1,12 +1,13 @@
 
-package com.eaglebank.api.infrastructure.validation
+package com.eaglebank.api.infra.validation
 
 import com.eaglebank.api.presentation.dto.Address
 import com.eaglebank.api.presentation.dto.CreateUserRequest
 import com.eaglebank.api.presentation.dto.ValidationDetail
 
-class ValidationService {
-    fun validateCreateUserRequest(request: CreateUserRequest): List<ValidationDetail> {
+class SimpleUserRequestValidationService : UserRequestValidationService
+{
+    override fun validateCreateUserRequest(request: CreateUserRequest): List<ValidationDetail> {
         val validationErrors = mutableListOf<ValidationDetail>()
 
         // Name validation
@@ -124,4 +125,15 @@ class ValidationService {
         val postcodeRegex = Regex("^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$")
         return postcode.uppercase().matches(postcodeRegex)
     }
+}
+
+interface UserRequestValidationService {
+    /**
+     * Validates a CreateUserRequest and returns a list of validation details.
+     * An empty list indicates no validation errors were found.
+     *
+     * @param request The CreateUserRequest to validate
+     * @return List of ValidationDetail objects describing any validation errors
+     */
+    fun validateCreateUserRequest(request: CreateUserRequest): List<ValidationDetail>
 }
