@@ -1,4 +1,3 @@
-
 package com.eaglebank.api.infra.security
 
 import com.auth0.jwt.JWT
@@ -7,7 +6,6 @@ import com.eaglebank.api.presentation.dto.AuthRequest
 import com.eaglebank.api.presentation.dto.AuthResponse
 import com.eaglebank.api.presentation.dto.ErrorResponse
 import com.eaglebank.api.presentation.dto.RefreshTokenResponse
-import com.typesafe.config.Config
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -15,14 +13,17 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.config.* // Import ApplicationConfig
 
-fun Application.configureSecurity(config: Config) {
-    val jwtRealm = config.getString("jwt.realm")
-    val jwtSecret = config.getString("jwt.secret")
-    val jwtIssuer = config.getString("jwt.issuer")
-    val jwtAudience = config.getString("jwt.audience")
-    val jwtAccessTokenExpiration = config.getLong("jwt.accessToken.expiration")
-    val jwtRefreshTokenExpiration = config.getLong("jwt.refreshToken.expiration")
+// Change the parameter type to io.ktor.server.config.ApplicationConfig
+fun Application.configureSecurity(config: ApplicationConfig) {
+    // Correctly access configuration values using config.property("path").getString()
+    val jwtRealm = config.property("jwt.realm").getString()
+    val jwtSecret = config.property("jwt.secret").getString()
+    val jwtIssuer = config.property("jwt.issuer").getString()
+    val jwtAudience = config.property("jwt.audience").getString()
+    val jwtAccessTokenExpiration = config.property("jwt.accessToken.expiration").getString().toLong()
+    val jwtRefreshTokenExpiration = config.property("jwt.refreshToken.expiration").getString().toLong()
 
     install(Authentication) {
         jwt("auth-jwt") {

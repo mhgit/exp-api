@@ -1,27 +1,44 @@
 package com.eaglebank.api.application
 
-import com.eaglebank.api.infra.di.serviceModule
+import com.eaglebank.api.config.DatabaseConfig
+import com.eaglebank.api.infra.persistence.DatabaseFactory
 import com.eaglebank.api.presentation.route.usersRoute
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.openapi.openAPI
-import io.ktor.server.plugins.swagger.swaggerUI
-import io.ktor.server.routing.routing
-import com.typesafe.config.Config
-import org.koin.ktor.plugin.Koin
-import org.koin.logger.slf4jLogger
-import com.eaglebank.api.infra.security.configureSecurity
+import io.ktor.server.config.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.openapi.*
+import io.ktor.server.plugins.swagger.*
+import io.ktor.server.routing.*
 
+fun Application.module() {
 
-fun Application.module(config: Config) {
-    install(Koin) {
-        slf4jLogger()
-        modules(serviceModule)
+    val applicationConfig = environment.config
+
+    try {
+        val dbUrl = applicationConfig.property("database.url").getString()
+        val dbDriver = applicationConfig.property("database.driver").getString()
+        val dbUser = applicationConfig.property("database.user").getString()
+        val dbPassword = applicationConfig.property("database.password").getString()
+
+        val dbConfig = DatabaseConfig(
+            url = dbUrl,
+            driver = dbDriver,
+            user = dbUser,
+            password = dbPassword
+        )
+
+        DatabaseFactory.init(dbConfig)
+
+    } catch (e: Exception) {
+        e.printStackTrace() // Print the full stack trace for detailed error analysis
+        throw e // Re-throw to ensure test failure and visibility of the original issue
     }
 
-    configureSerialization()
-    configureSecurity(config)
+
+
+    configureSecurity(applicationConfig)
+    configureSerialization() // This installs ContentNegotiation
     configureRouting()
     configureOpenAPI()
 }
@@ -34,7 +51,6 @@ fun Application.configureSerialization() {
 
 fun Application.configureRouting() {
     routing {
-        // Routes will be added here
         usersRoute()
         swaggerUI(path = "swagger", swaggerFile = "api-contract.yml")
     }
@@ -44,4 +60,8 @@ fun Application.configureOpenAPI() {
     routing {
         openAPI(path = "openapi", swaggerFile = "api-contract.yml")
     }
+}
+
+fun Application.configureSecurity(config: ApplicationConfig) {
+    // This needs a conversation.  Outside development, we need vault solutions for secrets etc.
 }
