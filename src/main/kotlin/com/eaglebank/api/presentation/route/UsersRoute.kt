@@ -5,7 +5,6 @@ import com.eaglebank.api.presentation.dto.CreateUserRequest
 import com.eaglebank.api.presentation.dto.UpdateUserRequest
 import com.eaglebank.api.presentation.mapper.UserMapper
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*

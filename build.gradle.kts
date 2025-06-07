@@ -43,6 +43,10 @@ dependencies {
     implementation("io.ktor:ktor-server-openapi")
     implementation("io.ktor:ktor-server-swagger")
     implementation("io.ktor:ktor-server-config-yaml")
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-client-json")
+
 
 
     implementation("io.insert-koin:koin-ktor")

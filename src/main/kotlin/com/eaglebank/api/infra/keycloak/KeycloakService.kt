@@ -2,8 +2,8 @@ package com.eaglebank.api.infra.keycloak
 
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.KeycloakBuilder
-import org.keycloak.representations.idm.UserRepresentation
 import org.keycloak.representations.idm.CredentialRepresentation
+import org.keycloak.representations.idm.UserRepresentation
 import org.slf4j.LoggerFactory
 import javax.ws.rs.core.Response
 
@@ -62,6 +62,39 @@ class KeycloakService(
         } catch (e: Exception) {
             logger.error("Failed to create user in Keycloak", e)
             throw RuntimeException("Failed to create user in Keycloak", e)
+        }
+    }
+
+    fun updateUser(userId: String, email: String, firstName: String, lastName: String) {
+        try {
+            val userResource = keycloak.realm(realm).users().get(userId)
+            val userRepresentation = userResource.toRepresentation().apply {
+                this.email = email
+                this.firstName = firstName
+                this.lastName = lastName
+                this.username = email  // Keeping username in sync with email
+            }
+
+            userResource.update(userRepresentation)
+            logger.info("Successfully updated user in Keycloak with ID: $userId")
+
+        } catch (e: Exception) {
+            logger.error("Failed to update user in Keycloak", e)
+            throw RuntimeException("Failed to update user in Keycloak", e)
+        }
+    }
+
+    fun deleteUser(userId: String) {
+        try {
+            val response = keycloak.realm(realm).users().delete(userId)
+            if (response.status != Response.Status.NO_CONTENT.statusCode) {
+                throw RuntimeException("Failed to delete user in Keycloak. Status: ${response.status}")
+            }
+            logger.info("Successfully deleted user in Keycloak with ID: $userId")
+
+        } catch (e: Exception) {
+            logger.error("Failed to delete user in Keycloak", e)
+            throw RuntimeException("Failed to delete user in Keycloak", e)
         }
     }
 }

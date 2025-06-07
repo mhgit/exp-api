@@ -1,8 +1,16 @@
 package com.eaglebank.api.application
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.ConsoleAppender
 import com.eaglebank.api.config.DatabaseConfig
+import com.eaglebank.api.infra.di.serviceModule
 import com.eaglebank.api.infra.persistence.DatabaseFactory
+import com.eaglebank.api.infra.security.configureSecurity
 import com.eaglebank.api.presentation.route.usersRoute
+import com.typesafe.config.ConfigFactory
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.config.*
@@ -12,16 +20,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.routing.*
-import com.typesafe.config.ConfigFactory
-import com.eaglebank.api.infra.security.configureSecurity
 import org.koin.ktor.plugin.Koin
-import org.koin.logger.slf4jLogger
-import com.eaglebank.api.infra.di.serviceModule
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.ConsoleAppender
 import org.slf4j.LoggerFactory
 
 
@@ -38,7 +37,6 @@ fun Application.module() {configureLogging()
     val applicationConfig = HoconApplicationConfig(ConfigFactory.load("application-dev.conf"))
 
     install(Koin) {
-        slf4jLogger()
         modules(serviceModule)
     }
 
