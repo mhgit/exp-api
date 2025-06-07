@@ -1,4 +1,4 @@
-# Eagle Bank API
+## Eagle Bank API
 
 This project provides a foundational API for a banking application, built with Kotlin and Ktor. It demonstrates core backend functionalities, including user management with persistence, request validation, and JWT-based authentication.
 
@@ -7,7 +7,7 @@ This project provides a foundational API for a banking application, built with K
 - [Features](#features)
 - [Technologies Used](#technologies-used)
 - [Installation](#installation)
-- [Running the Application](#running-the-application)
+- [Running the Application](#running_the_application)
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
 - [Configuration](#configuration)
@@ -77,3 +77,70 @@ Key configuration parameters include:
 A full discussion around password vaults etc will be required before this example is deployed.
 
 Note: For containerized deployments, configuration can be provided through environment variables that override the corresponding HOCON settings.
+
+## Keycloak Setup and Usage
+
+### Authentication Server Management
+
+The project uses Keycloak as the authentication server. Three scripts are provided to manage the Keycloak instance:
+
+1. `./scripts/start-keycloak.sh` - Downloads (if needed) and starts the Keycloak server
+   ```bash
+   ./scripts/start-keycloak.sh
+   ```
+   This script will:
+   - Download Keycloak 22.0.5 if not present (stored in `./infrastructure/keycloak`)
+   - Extract it to `./infrastructure/keycloak/keycloak-22.0.5`
+   - Start Keycloak on port 8082 (HTTP) and 9002 (management)
+
+2. `./scripts/setup-keycloak-realm.sh` - Configures the Keycloak realm and resources
+   ```bash
+   ./scripts/setup-keycloak-realm.sh
+   ```
+   This script will:
+   - Create the `eagle-bank` realm if it doesn't exist
+   - Set up the `eagle-bank-api` client
+   - Create required roles (`user`, `admin`, `account-manager`)
+   - Create a test user with username: `test-user` and password: `test123`
+
+3. `./scripts/stop-keycloak-server.sh` - Stops the Keycloak server
+   ```bash
+   ./scripts/stop-keycloak-server.sh
+   ```
+
+### Test User Login
+
+To access the test user account:
+1. Go to: http://localhost:8082/auth/realms/eagle-bank/account
+2. Login with:
+   - Username: `test-user`
+   - Password: `test123`
+
+Note: Make sure to use the specific URL above, as it directs to the correct realm (`eagle-bank`). 
+If you try to log in through the admin console, it will attempt to authenticate against the master realm instead.
+
+### Development Authentication
+
+To obtain an authentication token for development/testing:
+```bash curl -X POST "[http://localhost:8082/auth/realms/eagle-bank/protocol/openid-connect/token](http://localhost:8082/auth/realms/eagle-bank/protocol/openid-connect/token)"
+-H "Content-Type: application/x-www-form-urlencoded"
+-d "client_id=eagle-bank-api"
+-d "username=test-user"
+-d "password=test123"
+-d "grant_type=password"
+```
+
+The response will include an access token that can be used in subsequent API calls:
+
+```bash 
+curl -H "Authorization: Bearer <your-token>" [http://localhost:8080/api/v1/your-endpoint](http://localhost:8080/api/v1/your-endpoint)
+```
+
+### Keycloak Admin Console
+
+The Keycloak admin console can be accessed at:
+- URL: http://localhost:8082/auth/admin
+- Username: admin
+- Password: admin
+
+Remember to select the "eagle-bank" realm (top-left dropdown) when managing resources for this project.
