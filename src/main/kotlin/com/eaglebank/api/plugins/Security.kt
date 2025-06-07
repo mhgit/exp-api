@@ -6,21 +6,59 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import org.slf4j.LoggerFactory
-import java.math.BigInteger
+import io.ktor.server.response.*
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import java.security.KeyFactory
-import java.security.PublicKey
-import java.security.spec.RSAPublicKeySpec
+import java.security.interfaces.RSAPublicKey
+import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
-private val logger = LoggerFactory.getLogger("SecurityPlugin")
+@Serializable
+data class KeycloakPublicKeyResponse(
+    val keys: List<KeycloakKey>
+)
+
+@Serializable
+data class KeycloakKey(
+    val kid: String,
+    val kty: String,
+    val n: String,
+    val e: String,
+    val use: String,
+    val alg: String
+)
+
+class KeycloakRsaKeyProvider(private val issuer: String) {
+    private var publicKey: RSAPublicKey? = null
+
+    suspend fun getKey(): RSAPublicKey {
+        if (publicKey == null) {
+            publicKey = fetchPublicKey()
+        }
+        return publicKey!!
+    }
+
+    private suspend fun fetchPublicKey(): RSAPublicKey {
+        val client = HttpClient(CIO)
+        val response = client.get("$issuer/protocol/openid-connect/certs")
+        val keysResponse = Json.decodeFromString<KeycloakPublicKeyResponse>(response.body())
+        client.close()
+
+        val key = keysResponse.keys.first { it.use == "sig" }
+        val modulus = Base64.getUrlDecoder().decode(key.n)
+        val exponent = Base64.getUrlDecoder().decode(key.e)
+
+        val spec = X509EncodedKeySpec(modulus)
+        val publicKey = KeyFactory.getInstance("RSA").generatePublic(spec)
+        return publicKey as RSAPublicKey
+    }
+}
 
 fun Application.configureSecurity() {
     val config = environment.config
@@ -28,11 +66,14 @@ fun Application.configureSecurity() {
     val keycloakUrl = config.property("keycloak.serverUrl").getString()
     val keycloakIssuer = "$keycloakUrl/realms/$keycloakRealm"
 
+    val keyProvider = KeycloakRsaKeyProvider(keycloakIssuer)
+    val publicKey = runBlocking { keyProvider.getKey() }
+
     authentication {
         jwt("auth-jwt") {
             verifier(
                 JWT
-                    .require(Algorithm.RSA256(getPublicKey(keycloakIssuer), null))
+                    .require(Algorithm.RSA256(publicKey, null))
                     .withIssuer(keycloakIssuer)
                     .build()
             )
@@ -44,38 +85,8 @@ fun Application.configureSecurity() {
                 }
             }
             challenge { _, _ ->
-                throw AuthenticationException("Token is not valid or has expired")
+                call.respond(HttpStatusCode.Unauthorized, mapOf("message" to "Token is not valid or has expired"))
             }
         }
     }
 }
-
-private suspend fun getPublicKey(issuerUrl: String): PublicKey {
-    val wellKnownUrl = "$issuerUrl/.well-known/openid-configuration"
-    val client = HttpClient(CIO)
-
-    return try {
-        val wellKnown: JsonObject = client.get(wellKnownUrl).body()
-        val jwksUri = wellKnown["jwks_uri"].toString().removeSurrounding("\"")
-        val jwks: JsonObject = client.get(jwksUri).body()
-
-        val keyContent = jwks["keys"]?.jsonArray
-            ?.first { it.jsonObject["use"]?.jsonPrimitive?.content == "sig" }
-            ?.jsonObject
-            ?: throw IllegalStateException("No signing key found")
-
-        val modulus = keyContent["n"].toString().removeSurrounding("\"")
-        val exponent = keyContent["e"].toString().removeSurrounding("\"")
-
-        val spec = RSAPublicKeySpec(
-            BigInteger(1, Base64.getUrlDecoder().decode(modulus)),
-            BigInteger(1, Base64.getUrlDecoder().decode(exponent))
-        )
-
-        KeyFactory.getInstance("RSA").generatePublic(spec)
-    } finally {
-        client.close()
-    }
-}
-
-class AuthenticationException(message: String) : RuntimeException(message)

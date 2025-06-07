@@ -95,7 +95,11 @@ dependencies {
     testImplementation("io.ktor:ktor-client-content-negotiation")
     testImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
+    // ... other dependencies ...
 
+    // Auth0 JWT for testing
+    testImplementation("com.auth0:java-jwt:4.4.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 
 tasks.test {

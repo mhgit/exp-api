@@ -8,7 +8,6 @@ import ch.qos.logback.core.ConsoleAppender
 import com.eaglebank.api.config.DatabaseConfig
 import com.eaglebank.api.infra.di.serviceModule
 import com.eaglebank.api.infra.persistence.DatabaseFactory
-import com.eaglebank.api.infra.security.configureSecurity
 import com.eaglebank.api.presentation.route.usersRoute
 import com.typesafe.config.ConfigFactory
 import io.ktor.serialization.kotlinx.json.*
@@ -61,7 +60,6 @@ fun Application.module() {configureLogging()
         throw e // Re-throw to ensure test failure and visibility of the original issue
     }
 
-    configureSecurity(applicationConfig)
     configureSerialization() // This installs ContentNegotiation
     configureRouting()
     configureOpenAPI()
