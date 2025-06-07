@@ -1,4 +1,3 @@
-
 package com.eaglebank.api.infra.validation
 /*
 Note for Reviewer.  This is a very basic validation system.  Validation is notorious for:
@@ -108,7 +107,7 @@ class SimpleUserRequestValidationService : UserRequestValidationService {
              *
              * Used to ensure that the phone number matches a specific standardized pattern.
              */
-            val PHONE = Regex("^\\+\\d{2}-\\d{4}-\\d{4}$")
+            val PHONE = Regex("^\\+[1-9]\\d{1,14}$")
             /**
              * Regular expression for validating UK postcodes.
              *
