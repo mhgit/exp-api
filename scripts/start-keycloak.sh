@@ -3,18 +3,17 @@
 # Base installation directory
 BASE_DIR="$HOME/dev"
 KC_VERSION="26.2.5"
-KC_HOME="$BASE_DIR/keycloak-$KC_VERSION"
+KC_HOME="$BASE_DIR/keycloak-26.2.5"
 
-# Create base directory if it doesn't exist
-mkdir -p "$BASE_DIR"
+# Configuration variables
+KC_HTTP_PORT="${KC_HTTP_PORT:-8082}"
+KC_MGMT_PORT="${KC_MGMT_PORT:-9002}"
 
 # Check Java version
 java -version
 
-# Define variables
-KC_HTTP_PORT="${KC_HTTP_PORT:-8082}"
-KC_MGMT_PORT="${KC_MGMT_PORT:-9002}"
-JAVA_OPTS="${JAVA_OPTS:--Xms64m -Xmx512m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true}"
+# Create base directory if it doesn't exist
+mkdir -p "$BASE_DIR"
 
 # Download and install Keycloak if not already installed
 if [ ! -d "$KC_HOME" ]; then
@@ -30,16 +29,16 @@ if [ ! -d "$KC_HOME" ]; then
 fi
 
 echo "Using Keycloak installation at: $KC_HOME"
-echo "Waiting for Keycloak to start..."
 
-# Start Keycloak in development mode
-JAVA_HOME="$JAVA_HOME" \
-JAVA_OPTS="$JAVA_OPTS" \
+# Start Keycloak
+echo "Starting Keycloak..."
+JAVA_OPTS="-Xms64m -Xmx512m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m" \
 $KC_HOME/bin/kc.sh start-dev \
     --http-port=$KC_HTTP_PORT \
     --http-relative-path=/auth \
     --health-enabled=true \
     --metrics-enabled=true \
+    --features=preview \
     --http-management-port=$KC_MGMT_PORT \
     --hostname-strict=false \
     --cache=local &
@@ -47,7 +46,8 @@ $KC_HOME/bin/kc.sh start-dev \
 # Store the PID
 KC_PID=$!
 
-# Wait for Keycloak to be ready by checking health endpoint
+# Wait for Keycloak to be ready
+echo "Waiting for Keycloak to start..."
 echo "Checking Keycloak health at http://localhost:$KC_MGMT_PORT/auth/health/ready"
 max_attempts=20
 attempt=1
@@ -59,7 +59,6 @@ while [ $attempt -le $max_attempts ]; do
     RESPONSE_BODY=$(echo "$HEALTH_RESPONSE" | sed '$d')
     
     if [ "$HTTP_CODE" = "200" ]; then
-        # Remove all whitespace and newlines before checking
         CLEANED_RESPONSE=$(echo "$RESPONSE_BODY" | tr -d '[:space:]')
         if [[ "$CLEANED_RESPONSE" == *'"status":"UP"'* ]]; then
             echo "Keycloak started successfully!"
