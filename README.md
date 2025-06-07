@@ -144,3 +144,84 @@ The Keycloak admin console can be accessed at:
 - Password: admin
 
 Remember to select the "eagle-bank" realm (top-left dropdown) when managing resources for this project.
+
+## Architecture
+
+The application follows a clean architecture pattern with distinct layers:
+he application follows a clean architecture pattern with distinct layers:
+
+```mermaid
+graph TD
+    R[Routes]
+    DTO[DTOs]
+    M[Mappers]
+    DM[Domain Models]
+    RI[Repository Interfaces]
+    RE[Repository Implementations]
+    E[Entities]
+    DB[(Database)]
+
+    R --> DTO
+    DTO --> M
+    M --> DM
+    DM --> RI
+    RI --> RE
+    RE --> E
+    E --> DB
+
+    subgraph "Presentation Layer"
+        R
+        DTO
+        M
+    end
+    
+    subgraph "Domain Layer"
+        DM
+        RI
+    end
+    
+    subgraph "Infrastructure Layer"
+        RE
+        E
+        DB
+    end
+
+    style "Presentation Layer" fill:#f9f,stroke:#333,stroke-width:4px
+    style "Domain Layer" fill:#bbf,stroke:#333,stroke-width:4px
+    style "Infrastructure Layer" fill:#bfb,stroke:#333,stroke-width:4px
+```
+
+
+### Layer Responsibilities
+
+- **Presentation Layer**
+  - Routes: Handle HTTP requests and responses
+  - DTOs: Data Transfer Objects for API requests/responses
+  - Mappers: Convert between DTOs and Domain Models
+
+- **Domain Layer**
+  - Domain Models: Core business entities
+  - Repository Interfaces: Define data access contracts
+
+- **Infrastructure Layer**
+  - Repository Implementations: Concrete data access logic
+  - Entities: Database model representations
+  - Database: Actual data storage
+
+### Data Flow
+
+1. HTTP Request → Route
+2. Route receives DTO
+3. Mapper converts DTO to Domain Model
+4. Domain Layer processes business logic
+5. Repository Interface defines data access
+6. Repository Implementation handles persistence
+7. Entity maps to database structure
+8. Response flows back through the layers
+
+This architecture ensures:
+- Separation of concerns
+- Domain logic isolation
+- Infrastructure independence
+- Testability
+- Maintainability

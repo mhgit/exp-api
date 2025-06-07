@@ -1,12 +1,9 @@
 package com.eaglebank.api.infra.persistence
 
 import org.jetbrains.exposed.dao.id.IdTable
-import org.jetbrains.exposed.sql.javatime.timestamp
 
 object UserTable : IdTable<String>("users") {
-    override val id = varchar("id", 100).entityId()
-    override val primaryKey = PrimaryKey(id)
-    
+    override val id = varchar("id", 255).entityId()
     val name = varchar("name", 255)
     val addressLine1 = varchar("address_line1", 255)
     val addressLine2 = varchar("address_line2", 255).nullable()
@@ -15,7 +12,8 @@ object UserTable : IdTable<String>("users") {
     val county = varchar("county", 255)
     val postcode = varchar("postcode", 20)
     val phoneNumber = varchar("phone_number", 20)
-    val email = varchar("email", 255).uniqueIndex()
-    val createdTimestamp = timestamp("created_timestamp")
-    val updatedTimestamp = timestamp("updated_timestamp")
+    val email = varchar("email", 255)
+    val keycloakId = varchar("keycloak_id", 255).nullable()
+    val createdTimestamp = varchar("created_timestamp", 30)
+    val updatedTimestamp = varchar("updated_timestamp", 30)
 }

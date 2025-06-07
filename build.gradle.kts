@@ -48,13 +48,17 @@ dependencies {
     implementation("io.insert-koin:koin-ktor")
     implementation("io.insert-koin:koin-logger-slf4j")
     implementation("com.typesafe:config:1.4.3")
+    implementation("javax.ws.rs:javax.ws.rs-api:2.1.1")
 
 
-    // Ktor security
+
+    // Ktor / security
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation("io.ktor:ktor-server-sessions")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("org.keycloak:keycloak-admin-client:22.0.5")
+
 
 
     // Serialization

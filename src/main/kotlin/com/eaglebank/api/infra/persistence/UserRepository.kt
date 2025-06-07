@@ -1,81 +1,88 @@
 package com.eaglebank.api.infra.persistence
 
-import com.eaglebank.api.presentation.dto.Address
-import com.eaglebank.api.presentation.dto.CreateUserRequest
-import com.eaglebank.api.presentation.dto.UpdateUserRequest
-import com.eaglebank.api.presentation.dto.UserResponse
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import com.eaglebank.api.domain.model.Address
+import com.eaglebank.api.domain.model.User
+import com.eaglebank.api.domain.repository.IUserRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
-import java.util.UUID
 
-class UserRepository {
-    fun createUser(request: CreateUserRequest): UserResponse = transaction {
-        val now = Instant.now()
-        val userEntity = UserEntity.new(UserEntity.generateUserId()) {
-            name = request.name
-            addressLine1 = request.address.line1
-            addressLine2 = request.address.line2
-            addressLine3 = request.address.line3
-            town = request.address.town
-            county = request.address.county
-            postcode = request.address.postcode
-            phoneNumber = request.phoneNumber
-            email = request.email
-            createdTimestamp = now
-            updatedTimestamp = now
-        }
-        userEntity.toUserResponse()
-    }
-
-    fun getUserById(id: String): UserResponse? = transaction {
-        UserEntity.findById(id)?.toUserResponse()
-    }
-
-    fun updateUser(id: String, request: UpdateUserRequest): UserResponse? = transaction {
-        UserEntity.findById(id)?.apply {
-            request.name?.let { this.name = it }
-            request.phoneNumber?.let { this.phoneNumber = it }
-            request.email?.let { this.email = it }
-            request.address?.let {
-                this.addressLine1 = it.line1
-                this.addressLine2 = it.line2
-                this.addressLine3 = it.line3
-                this.town = it.town
-                this.county = it.county
-                this.postcode = it.postcode
+class UserRepository : IUserRepository {
+    private fun toEntity(user: User): UserEntity {
+        return transaction {
+            UserEntity.new(user.id) {
+                name = user.name
+                addressLine1 = user.address.line1
+                addressLine2 = user.address.line2
+                addressLine3 = user.address.line3
+                town = user.address.town
+                county = user.address.county
+                postcode = user.address.postcode
+                phoneNumber = user.phoneNumber
+                email = user.email
+                keycloakId = user.keycloakId
+                createdTimestamp = user.createdTimestamp
+                updatedTimestamp = user.updatedTimestamp
             }
-            updatedTimestamp = Instant.now()
-        }?.toUserResponse()
+        }
     }
 
-    fun deleteUser(id: String): Boolean = transaction {
-        val deletedRows = UserTable.deleteWhere { UserTable.id eq id }
-        deletedRows > 0
-    }
-
-    fun getAllUsers(): List<UserResponse> = transaction {
-        UserEntity.all().map { it.toUserResponse() }
-    }
-
-    // Extension function to convert UserEntity to UserResponse
-    private fun UserEntity.toUserResponse(): UserResponse {
-        return UserResponse(
-            id = this.id.value.toString(),
-            name = this.name,
+    private fun toDomain(entity: UserEntity): User {
+        return User(
+            id = entity.id.value,
+            name = entity.name,
             address = Address(
-                line1 = this.addressLine1,
-                line2 = this.addressLine2,
-                line3 = this.addressLine3,
-                town = this.town,
-                county = this.county,
-                postcode = this.postcode
+                line1 = entity.addressLine1,
+                line2 = entity.addressLine2,
+                line3 = entity.addressLine3,
+                town = entity.town,
+                county = entity.county,
+                postcode = entity.postcode
             ),
-            phoneNumber = this.phoneNumber,
-            email = this.email,
-            createdTimestamp = this.createdTimestamp.toString(),
-            updatedTimestamp = this.updatedTimestamp.toString()
+            phoneNumber = entity.phoneNumber,
+            email = entity.email,
+            keycloakId = entity.keycloakId,
+            createdTimestamp = entity.createdTimestamp,
+            updatedTimestamp = entity.updatedTimestamp
         )
+    }
+
+    override fun createUser(user: User): User = transaction {
+        val timestamp = Instant.now().toString()
+        val userToSave = user.copy(
+            createdTimestamp = timestamp,
+            updatedTimestamp = timestamp
+        )
+        toDomain(toEntity(userToSave))
+    }
+
+    override fun getUserById(id: String): User? = transaction {
+        UserEntity.findById(id)?.let { toDomain(it) }
+    }
+
+    override fun updateUser(id: String, user: User): User? = transaction {
+        UserEntity.findById(id)?.apply {
+            name = user.name
+            addressLine1 = user.address.line1
+            addressLine2 = user.address.line2
+            addressLine3 = user.address.line3
+            town = user.address.town
+            county = user.address.county
+            postcode = user.address.postcode
+            phoneNumber = user.phoneNumber
+            email = user.email
+            keycloakId = user.keycloakId
+            updatedTimestamp = Instant.now().toString()
+        }?.let { toDomain(it) }
+    }
+
+    override fun deleteUser(id: String): Boolean = transaction {
+        UserEntity.findById(id)?.let {
+            it.delete()
+            true
+        } ?: false
+    }
+
+    override fun getAllUsers(): List<User> = transaction {
+        UserEntity.all().map { toDomain(it) }
     }
 }
