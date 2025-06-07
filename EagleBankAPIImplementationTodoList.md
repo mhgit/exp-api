@@ -1,32 +1,63 @@
-
 # Eagle Bank API Implementation TODO List
 
-## Authentication & Security
-### Login System
-- [ ] Update User entity to include hashed password field
-- [ ] Integrate `PasswordService` with User management
-- [ ] Modify login flow to verify passwords using BCrypt
-- [ ] Add password strength validation
-- [ ] Implement proper error handling for authentication failures
+## Authentication & Security (Keycloak Integration)
+### Keycloak Setup
+- [ ] Configure Keycloak realm for Eagle Bank
+- [ ] Set up client application in Keycloak
+- [ ] Configure user federation if needed
+- [ ] Set up required user attributes and roles
+- [ ] Configure password policies in Keycloak
+- [ ] Set up email verification flow
+- [ ] Configure Keycloak themes for branded experience
 
-### Token Management
-- [ ] Complete refresh token implementation
-- [ ] Add token revocation mechanism
-- [ ] Implement token rotation security
-- [ ] Add rate limiting for authentication endpoints
+### API Integration
+- [ ] Add Keycloak dependencies to the project
+- [ ] Configure Keycloak adapter in the application
+- [ ] Implement token validation middleware
+- [ ] Map Keycloak roles to application permissions
+- [ ] Add Keycloak user ID to User entity
+- [ ] Implement token introspection
+- [ ] Set up role-based access control (RBAC)
+
+## Infrastructure (AWS Setup)
+### Keycloak Deployment
+- [ ] Set up ECS Fargate cluster
+- [ ] Configure Aurora PostgreSQL for Keycloak
+- [ ] Deploy Keycloak container to ECS
+- [ ] Set up Application Load Balancer
+- [ ] Configure auto-scaling policies
+- [ ] Implement health checks
+- [ ] Set up container logging to CloudWatch
+
+### Edge Protection
+- [ ] Configure CloudFront distribution
+- [ ] Set up AWS WAF rules
+- [ ] Implement AWS Shield protection
+- [ ] Configure SSL/TLS with ACM
+- [ ] Set up security groups
+- [ ] Configure VPC settings
+- [ ] Implement network ACLs
+
+### Monitoring & Operations
+- [ ] Set up CloudWatch alarms
+- [ ] Configure backup strategy
+- [ ] Implement disaster recovery plan
+- [ ] Set up monitoring dashboards
+- [ ] Configure alerting
+- [ ] Implement infrastructure as code (Terraform/CDK)
 
 ## User Management
 ### Data Model
-- [ ] Add password hash field to User entity
-- [ ] Add password salt storage (if required)
-- [ ] Add password reset functionality
-- [ ] Add email verification system
+- [ ] Update User entity to include Keycloak ID
+- [ ] Remove local password-related fields
+- [ ] Add role mapping fields if needed
+- [ ] Update user synchronization logic
 
 ### API Endpoints
-- [ ] Update user creation to include password hashing
-- [ ] Add password change endpoint
-- [ ] Add password reset request endpoint
-- [ ] Add email verification endpoint
+- [ ] Update user creation to integrate with Keycloak
+- [ ] Modify user update endpoints for Keycloak sync
+- [ ] Implement user profile endpoints
+- [ ] Add group management endpoints
 
 ## Account Management
 ### Account Creation (/v1/accounts POST)
@@ -53,33 +84,26 @@
 - [ ] Implement account closure process
 - [ ] Add deletion verification steps
 
-## Validation & Security
-- [ ] Implement account number pattern validation (^01\d{6}$)
-- [ ] Add input sanitization
-- [ ] Implement request rate limiting
-- [ ] Add comprehensive error handling
-
 ## Testing
-- [ ] Add unit tests for password hashing
-- [ ] Add integration tests for authentication flow
-- [ ] Add tests for account management
+- [ ] Add Keycloak integration tests
+- [ ] Test token validation
+- [ ] Test role-based access
 - [ ] Add security testing suite
+- [ ] Test infrastructure deployment
+- [ ] Load testing with authentication
 
 ## Documentation
-- [ ] Update API documentation with security details
-- [ ] Add password policy documentation
-- [ ] Document account management processes
-- [ ] Add deployment security guidelines
+- [ ] Document Keycloak setup process
+- [ ] Update API documentation with authentication details
+- [ ] Document infrastructure setup
+- [ ] Add deployment guidelines
+- [ ] Document security practices
+- [ ] Create operations runbook
 
 ## Future Considerations
-- [ ] Implement audit logging
+- [ ] Implement audit logging with Keycloak events
 - [ ] Add transaction management
-- [ ] Consider multi-factor authentication
+- [ ] Consider multi-factor authentication via Keycloak
 - [ ] Plan for scalability improvements
-- [ ] Hosting arrangement
-- [ ] LB
-- [ ] ALB
-- [ ] WAF
-- [ ] DB choice
-- [ ] transaction store
-- [ ] Deployment
+- [ ] Consider multi-region deployment
+- [ ] Evaluate Keycloak clustering options
