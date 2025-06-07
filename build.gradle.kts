@@ -25,6 +25,7 @@ val logbackVersion = "1.5.13"
 val koinVersion = "4.1.0-RC1"
 val ktorVersion = "3.1.3"
 val kotlinVersion = "2.1.21"
+val auth0_jwks_version = "0.22.1"
 
 
 val mockkVersion = "1.14.2"
@@ -60,6 +61,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation("org.keycloak:keycloak-admin-client:22.0.5")
+    implementation("com.auth0:jwks-rsa:$auth0_jwks_version")
 
 
 
