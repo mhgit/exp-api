@@ -133,7 +133,7 @@ class SimpleUserRequestValidationService : UserRequestValidationService {
 
             if (!request.phoneNumber.matches(ValidationPatterns.PHONE)) {
                 add(ValidationDetail.invalidFormat("phoneNumber",
-                    "Must be in format: +XX-XXXX-XXXX"))
+                    "Must be in format: + Followed by any non 0, followed by 14 digits"))
             }
 
             validateAddress(request.address)?.let { addAll(it) }

@@ -91,7 +91,11 @@ fun Application.configureOpenAPI() {
 fun Application.configureLogging() {
     val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
     val context = LoggerFactory.getILoggerFactory() as LoggerContext
-    
+
+    // Clear existing appenders
+    rootLogger.detachAndStopAllAppenders()
+
+
     val consoleAppender = ConsoleAppender<ILoggingEvent>().apply {
         setContext(context)
         name = "STDOUT"
