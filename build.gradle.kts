@@ -59,8 +59,6 @@ dependencies {
     // Ktor / security
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
-    implementation("io.ktor:ktor-server-sessions")
-    implementation("org.mindrot:jbcrypt:0.4")
     implementation("org.keycloak:keycloak-admin-client:22.0.5")
 
 
