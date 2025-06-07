@@ -2,11 +2,11 @@
 
 ## Authentication & Security (Keycloak Integration)
 ### Keycloak Setup
-- [ ] Configure Keycloak realm for Eagle Bank
-- [ ] Set up client application in Keycloak
+- [x] Configure Keycloak realm for Eagle Bank
+- [x] Set up client application in Keycloak
 - [ ] Configure user federation if needed
-- [ ] Set up required user attributes and roles
-- [ ] Configure password policies in Keycloak
+- [x] Set up required user attributes and roles
+- [x] Configure password policies in Keycloak
 - [ ] Set up email verification flow
 - [ ] Configure Keycloak themes for branded experience
 
