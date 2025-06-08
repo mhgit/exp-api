@@ -2,9 +2,13 @@ package com.eaglebank.api.presentation.routes
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.eaglebank.api.application.configureOpenAPI
-import com.eaglebank.api.application.configureRouting
-import com.typesafe.config.ConfigFactory
+import com.eaglebank.api.domain.model.Address
+import com.eaglebank.api.domain.model.User
+import com.eaglebank.api.domain.repository.IUserRepository
+import com.eaglebank.api.infra.validation.UserRequestValidationService
+import com.eaglebank.api.presentation.dto.CreateUserRequest
+import com.eaglebank.api.presentation.dto.ValidationDetail
+import com.eaglebank.api.presentation.route.usersRoute
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -12,24 +16,47 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-import io.ktor.server.config.*
+import io.ktor.server.routing.*
 import io.ktor.server.testing.*
 import kotlinx.serialization.json.Json
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.dsl.module
 import org.koin.test.KoinTest
+import java.time.Instant
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 
-@Disabled("Authentication tests disabled due to AuthenticationHolder plugin issues in test environment")
 @DisplayName("Test suite for the UsersRoute")
 class UsersRouteTest : KoinTest {
-    private val config = HoconApplicationConfig(ConfigFactory.load("application-test.conf"))
     private val USERS_ENDPOINT = "/v1/users"
 
     // Mock JWT token for testing with required claims
     private val testToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0." +
             "eyJzdWIiOiJ0ZXN0LXVzZXIiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODIvYXV0aC9yZWFsbXMvZWFnbGUtYmFuayJ9."
+
+    // Test dependencies
+    private val testUserRepository = TestUserRepository()
+    private val testValidationService = TestUserRequestValidationService()
+
+    @BeforeTest
+    fun setup() {
+        stopKoin() // Stop any existing Koin instance
+        startKoin {
+            modules(module {
+                single<IUserRepository> { testUserRepository }
+                single<UserRequestValidationService> { testValidationService }
+            })
+        }
+    }
+
+    @AfterTest
+    fun tearDown() {
+        stopKoin()
+    }
 
     private fun Application.configureTestingModule() {
         install(Authentication) {
@@ -47,18 +74,95 @@ class UsersRouteTest : KoinTest {
             }
         }
 
-        configureRouting()
-        configureOpenAPI()
+        install(io.ktor.server.plugins.contentnegotiation.ContentNegotiation) {
+            json(Json {
+                prettyPrint = true
+                isLenient = true
+            })
+        }
+
+        routing {
+            usersRoute()
+        }
+    }
+
+    // Simple test implementation of IUserRepository
+    class TestUserRepository : IUserRepository {
+        private val users = mutableMapOf<String, User>()
+
+        init {
+            // Add a test user
+            val testUser = User(
+                id = "usr-test123456",
+                name = "Test User",
+                address = Address(
+                    line1 = "123 Test St",
+                    line2 = null,
+                    line3 = null,
+                    town = "Testville",
+                    county = "Testshire",
+                    postcode = "TE1 1ST"
+                ),
+                phoneNumber = "+44-1234-5678",
+                email = "test@example.com",
+                keycloakId = "test-keycloak-id",
+                createdTimestamp = Instant.now().toString(),
+                updatedTimestamp = Instant.now().toString()
+            )
+            users[testUser.id] = testUser
+        }
+
+        override fun createUser(user: User): User {
+            val newUser = user.copy(
+                id = if (user.id.isBlank()) User.generateId() else user.id,
+                createdTimestamp = Instant.now().toString(),
+                updatedTimestamp = Instant.now().toString()
+            )
+            users[newUser.id] = newUser
+            return newUser
+        }
+
+        override fun getUserById(id: String): User? = users[id]
+
+        override fun updateUser(id: String, user: User): User? {
+            if (!users.containsKey(id)) return null
+            val updatedUser = user.copy(
+                id = id,
+                updatedTimestamp = Instant.now().toString()
+            )
+            users[id] = updatedUser
+            return updatedUser
+        }
+
+        override fun deleteUser(id: String): Boolean {
+            return users.remove(id) != null
+        }
+
+        override fun getAllUsers(): List<User> = users.values.toList()
+    }
+
+    // Simple test implementation of UserRequestValidationService
+    class TestUserRequestValidationService : UserRequestValidationService {
+        override fun validateCreateUserRequest(request: CreateUserRequest): List<ValidationDetail> {
+            // For testing, we'll just do minimal validation
+            val errors = mutableListOf<ValidationDetail>()
+
+            if (request.name.isBlank()) {
+                errors.add(ValidationDetail.required("name"))
+            }
+
+            if (request.email.isBlank()) {
+                errors.add(ValidationDetail.required("email"))
+            }
+
+            return errors
+        }
     }
 
     // Then in the test application setup:
     private fun runUserTestApplication(
         block: suspend ApplicationTestBuilder.(client: io.ktor.client.HttpClient) -> Unit
     ) = testApplication {
-        environment {
-            config = this@UsersRouteTest.config
-        }
-
         application {
             configureTestingModule()
         }
@@ -103,7 +207,7 @@ class UsersRouteTest : KoinTest {
     @Test
     @DisplayName("GET /users/{id} with valid token should return OK")
     fun testGetUserById_withValidToken_returnsOk() = runUserTestApplication { client ->
-        val userId = "test-user-id"
+        val userId = "usr-test123456"
         val response = client.get("$USERS_ENDPOINT/$userId") {
             bearerAuth(testToken)
         }
