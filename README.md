@@ -8,7 +8,8 @@ This project provides a foundational API for a banking application, built with K
 - [Planning](#planning)
 - [Technologies Used](#technologies-used)
 - [Installation and Setup](#installation-and-setup)
-- [API Endpoints](#api-endpoints)
+- [API Implementation Status](#api-implementation-status)
+- [Technical Concerns](#technical-concerns)
 - [Testing](#testing)
 - [Configuration](#configuration)
 - [Future Considerations](#future-considerations)
@@ -45,6 +46,7 @@ For a detailed breakdown of planned tasks and their current status, see the [Pla
 *   **Ktor:** A flexible and asynchronous web framework for Kotlin.
 *   **Koin:** A pragmatic lightweight dependency injection framework for Kotlin developers.
 *   **H2 Database:** An in-memory relational database for development and testing.
+* **Keycloak:** An open source identity and access management solution.
 *   **Gradle:** Build automation tool.
 *   **JUnit 5:** Testing framework.
 *   **MockK:** Mocking library for Kotlin.
@@ -83,6 +85,8 @@ graph TD
     RE[Repository Implementations]
     E[Entities]
     DB[(Database)]
+    KC[(Keycloak)]
+    Auth[Authentication Middleware]
 
     R --> DTO
     DTO --> M
@@ -92,10 +96,14 @@ graph TD
     RE --> E
     E --> DB
 
+    Auth --> KC
+    R --> Auth
+
     subgraph Presentation\ Layer
         R
         DTO
         M
+        Auth
     end
 
     subgraph Domain\ Layer
@@ -107,6 +115,7 @@ graph TD
         RE
         E
         DB
+        KC
     end
 
     style Presentation\ Layer fill:#f9f,stroke:#333,stroke-width:4px
@@ -149,6 +158,71 @@ This architecture ensures:
 - Testability
 - Maintainability
 
+## API Implementation Status
+
+The following table shows the current implementation status of the API endpoints defined in the OpenAPI specification:
+
+### Implemented APIs
+
+| Endpoint           | Method | Description       | Status        |
+|--------------------|--------|-------------------|---------------|
+| /v1/users          | POST   | Create a new user | ✅ Implemented |
+| /v1/users/{userId} | GET    | Fetch user by ID  | ✅ Implemented |
+| /v1/users/{userId} | PATCH  | Update user by ID | ✅ Implemented |
+| /v1/users/{userId} | DELETE | Delete user by ID | ✅ Implemented |
+| /v1/users          | GET    | List all users    | ✅ Implemented |
+
+### Pending APIs
+
+| Endpoint                                                  | Method | Description                                     | Status    |
+|-----------------------------------------------------------|--------|-------------------------------------------------|-----------|
+| /login                                                    | POST   | Authenticate user and obtain JWT tokens         | ⏳ Pending |
+| /refresh-token                                            | POST   | Obtain a new access token using a refresh token | ⏳ Pending |
+| /protected                                                | GET    | Access a protected resource                     | ⏳ Pending |
+| /v1/accounts                                              | POST   | Create a new bank account                       | ⏳ Pending |
+| /v1/accounts                                              | GET    | List accounts                                   | ⏳ Pending |
+| /v1/accounts/{accountNumber}                              | GET    | Fetch account by account number                 | ⏳ Pending |
+| /v1/accounts/{accountNumber}                              | PATCH  | Update account by account number                | ⏳ Pending |
+| /v1/accounts/{accountNumber}                              | DELETE | Delete account by account number                | ⏳ Pending |
+| /v1/accounts/{accountNumber}/transactions                 | POST   | Create a transaction                            | ⏳ Pending |
+| /v1/accounts/{accountNumber}/transactions                 | GET    | List transactions                               | ⏳ Pending |
+| /v1/accounts/{accountNumber}/transactions/{transactionId} | GET    | Fetch transaction by ID                         | ⏳ Pending |
+
+For a detailed description of each API endpoint, refer to the OpenAPI specification in
+`src/main/resources/api-contract.yml`.
+
+## Technical Concerns
+
+### SIEM Logging
+
+Security Information and Event Management (SIEM) logging is essential for monitoring and analyzing security events.
+Implementation considerations include:
+
+- Integration with a SIEM solution (e.g., Splunk, ELK Stack)
+- Structured logging format for security events
+- Logging of authentication attempts, access control decisions, and sensitive operations
+- Compliance with regulatory requirements for log retention and protection
+
+### OpenTelemetry
+
+OpenTelemetry provides a standardized way to collect and export telemetry data:
+
+- Distributed tracing across microservices
+- Metrics collection for performance monitoring
+- Context propagation between services
+- Integration with observability backends (e.g., Jaeger, Prometheus)
+
+### Monitoring
+
+A comprehensive monitoring strategy should include:
+
+- Health checks for all services and dependencies
+- Performance metrics (response times, throughput, error rates)
+- Resource utilization (CPU, memory, disk, network)
+- Business metrics (transaction volumes, user activity)
+- Alerting and notification systems for critical issues
+- Dashboards for real-time visibility
+
 ## Authentication with Keycloak
 
 The application uses Keycloak for authentication and user management. Below is a diagram showing how API calls are
@@ -187,6 +261,73 @@ There are several advantages to using Keycloak over implementing custom authenti
 4. **Reduced Development Effort** - No need to implement complex security features from scratch
 5. **Delegation of Security Concerns** - Security experts maintain Keycloak, reducing the risk of security
    vulnerabilities
+
+### Role-Based Access Control for Preventing IDOR Attacks
+
+Insecure Direct Object References (IDOR) are a type of access control vulnerability that occurs when an application uses
+user-supplied input to access objects directly. Keycloak's role-based access control can be leveraged to prevent IDOR
+attacks in the following ways:
+
+#### User List Access Restriction
+
+A common IDOR vulnerability is allowing regular users to access a complete list of all users in the system:
+
+```mermaid
+sequenceDiagram
+    participant RegularUser as Regular User
+    participant API as Eagle Bank API
+    participant KC as Keycloak
+
+    RegularUser->>API: GET /v1/users
+    API->>KC: Check if user has 'admin' role
+
+    alt Has Admin Role
+        KC-->>API: Role verification success
+        API-->>RegularUser: Return complete user list
+    else No Admin Role
+        KC-->>API: Role verification failure
+        API-->>RegularUser: Return 403 Forbidden
+    end
+```
+
+Implementation approach:
+
+1. Define an 'admin' role in Keycloak
+2. Assign this role to administrative users only
+3. In the API endpoints that return lists of users, check for the 'admin' role in the JWT token
+4. Return a 403 Forbidden error if the user doesn't have the required role
+
+#### Account Access Restriction
+
+When implementing account management features, it's critical to prevent users from accessing other users' accounts:
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant API as Eagle Bank API
+    participant KC as Keycloak
+
+    User->>API: GET /v1/accounts/{accountId}
+    API->>KC: Extract user ID from token
+    API->>API: Verify account belongs to user
+
+    alt Account Belongs to User
+        API-->>User: Return account details
+    else Account Doesn't Belong to User
+        API-->>User: Return 403 Forbidden
+    end
+```
+
+Implementation approach:
+
+1. Store account ownership information in the database (which user owns which account)
+2. Extract the user ID from the Keycloak JWT token for each request
+3. Before returning account information, verify that the account belongs to the requesting user
+4. For administrative functions, create specific roles (e.g., 'account-manager') that allow access to multiple accounts
+5. Always log access attempts for security auditing
+
+By implementing these role-based access controls with Keycloak, the application can effectively prevent IDOR
+vulnerabilities and ensure that users can only access resources they are authorized to view or modify.
 
 ## Documentation
 
