@@ -45,6 +45,7 @@ For a detailed breakdown of planned tasks and their current status, see the [Pla
 *   **Ktor:** A flexible and asynchronous web framework for Kotlin.
 *   **Koin:** A pragmatic lightweight dependency injection framework for Kotlin developers.
 *   **H2 Database:** An in-memory relational database for development and testing.
+* **Keycloak:** An open source identity and access management solution.
 *   **Gradle:** Build automation tool.
 *   **JUnit 5:** Testing framework.
 *   **MockK:** Mocking library for Kotlin.
@@ -83,6 +84,8 @@ graph TD
     RE[Repository Implementations]
     E[Entities]
     DB[(Database)]
+    KC[(Keycloak)]
+    Auth[Authentication Middleware]
 
     R --> DTO
     DTO --> M
@@ -92,10 +95,14 @@ graph TD
     RE --> E
     E --> DB
 
+    Auth --> KC
+    R --> Auth
+
     subgraph Presentation\ Layer
         R
         DTO
         M
+        Auth
     end
 
     subgraph Domain\ Layer
@@ -107,6 +114,7 @@ graph TD
         RE
         E
         DB
+        KC
     end
 
     style Presentation\ Layer fill:#f9f,stroke:#333,stroke-width:4px
@@ -187,6 +195,73 @@ There are several advantages to using Keycloak over implementing custom authenti
 4. **Reduced Development Effort** - No need to implement complex security features from scratch
 5. **Delegation of Security Concerns** - Security experts maintain Keycloak, reducing the risk of security
    vulnerabilities
+
+### Role-Based Access Control for Preventing IDOR Attacks
+
+Insecure Direct Object References (IDOR) are a type of access control vulnerability that occurs when an application uses
+user-supplied input to access objects directly. Keycloak's role-based access control can be leveraged to prevent IDOR
+attacks in the following ways:
+
+#### User List Access Restriction
+
+A common IDOR vulnerability is allowing regular users to access a complete list of all users in the system:
+
+```mermaid
+sequenceDiagram
+    participant RegularUser as Regular User
+    participant API as Eagle Bank API
+    participant KC as Keycloak
+
+    RegularUser->>API: GET /v1/users
+    API->>KC: Check if user has 'admin' role
+
+    alt Has Admin Role
+        KC-->>API: Role verification success
+        API-->>RegularUser: Return complete user list
+    else No Admin Role
+        KC-->>API: Role verification failure
+        API-->>RegularUser: Return 403 Forbidden
+    end
+```
+
+Implementation approach:
+
+1. Define an 'admin' role in Keycloak
+2. Assign this role to administrative users only
+3. In the API endpoints that return lists of users, check for the 'admin' role in the JWT token
+4. Return a 403 Forbidden error if the user doesn't have the required role
+
+#### Account Access Restriction
+
+When implementing account management features, it's critical to prevent users from accessing other users' accounts:
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant API as Eagle Bank API
+    participant KC as Keycloak
+
+    User->>API: GET /v1/accounts/{accountId}
+    API->>KC: Extract user ID from token
+    API->>API: Verify account belongs to user
+
+    alt Account Belongs to User
+        API-->>User: Return account details
+    else Account Doesn't Belong to User
+        API-->>User: Return 403 Forbidden
+    end
+```
+
+Implementation approach:
+
+1. Store account ownership information in the database (which user owns which account)
+2. Extract the user ID from the Keycloak JWT token for each request
+3. Before returning account information, verify that the account belongs to the requesting user
+4. For administrative functions, create specific roles (e.g., 'account-manager') that allow access to multiple accounts
+5. Always log access attempts for security auditing
+
+By implementing these role-based access controls with Keycloak, the application can effectively prevent IDOR
+vulnerabilities and ensure that users can only access resources they are authorized to view or modify.
 
 ## Documentation
 
