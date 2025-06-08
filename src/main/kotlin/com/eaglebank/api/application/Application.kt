@@ -1,10 +1,19 @@
 package com.eaglebank.api.application
 
-import com.eaglebank.api.config.DatabaseConfig
-import com.eaglebank.api.infra.persistence.DatabaseFactory
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.ConsoleAppender
+import com.auth0.jwk.JwkProvider
+import com.auth0.jwk.UrlJwkProvider
+import com.eaglebank.api.infra.di.createServiceModule
 import com.eaglebank.api.presentation.route.usersRoute
+import com.typesafe.config.ConfigFactory
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.config.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -12,17 +21,9 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.routing.*
-import com.typesafe.config.ConfigFactory
-import com.eaglebank.api.infra.security.configureSecurity
 import org.koin.ktor.plugin.Koin
-import org.koin.logger.slf4jLogger
-import com.eaglebank.api.infra.di.serviceModule
-import ch.qos.logback.classic.Logger
-import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder
-import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.ConsoleAppender
 import org.slf4j.LoggerFactory
+import java.net.URI
 
 
 fun main() {
@@ -32,39 +33,52 @@ fun main() {
     }.start(wait = true)
 }
 
-fun Application.module() {configureLogging()
+fun Application.module() {
     configureLogging()
+    configureSerialization()
 
     val applicationConfig = HoconApplicationConfig(ConfigFactory.load("application-dev.conf"))
 
     install(Koin) {
-        slf4jLogger()
-        modules(serviceModule)
+        modules(listOf(createServiceModule(applicationConfig)))
     }
 
+    install(Authentication) {
+        jwt("auth-jwt") {
+            val jwtAudience = applicationConfig.property("jwt.audience").getString()
+            val jwtIssuer = applicationConfig.property("jwt.issuer").getString()
+            realm = applicationConfig.property("jwt.realm").getString()
 
-    try {
-        val dbUrl = applicationConfig.property("database.url").getString()
-        val dbDriver = applicationConfig.property("database.driver").getString()
-        val dbUser = applicationConfig.property("database.user").getString()
-        val dbPassword = applicationConfig.property("database.password").getString()
+            val keycloakUrl = applicationConfig.property("keycloak.serverUrl").getString()
+            val keycloakRealm = applicationConfig.property("keycloak.realm").getString()
 
-        val dbConfig = DatabaseConfig(
-            url = dbUrl,
-            driver = dbDriver,
-            user = dbUser,
-            password = dbPassword
-        )
+            verifier(
+                jwkProvider = UrlJwkProvider(
+                    URI("$keycloakUrl/realms/$keycloakRealm/protocol/openid-connect/certs").toURL()
+                ),
+                issuer = jwtIssuer
+            ) {
+                acceptLeeway(3)
+                acceptIssuedAt(120)
+                withAudience(jwtAudience)
+            }
 
-        DatabaseFactory.init(dbConfig)
-
-    } catch (e: Exception) {
-        e.printStackTrace() // Print the full stack trace for detailed error analysis
-        throw e // Re-throw to ensure test failure and visibility of the original issue
+            validate { credential ->
+                val logger = LoggerFactory.getLogger("JWTValidation")
+                try {
+                    if (credential.payload.audience.contains(jwtAudience)) {
+                        JWTPrincipal(credential.payload)
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
+                    logger.error("Exception during JWT validation", e)
+                    null
+                }
+            }
+        }
     }
 
-    configureSecurity(applicationConfig)
-    configureSerialization() // This installs ContentNegotiation
     configureRouting()
     configureOpenAPI()
 }
@@ -92,25 +106,27 @@ fun Application.configureLogging() {
     val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
     val context = LoggerFactory.getILoggerFactory() as LoggerContext
 
-    // Clear existing appenders
     rootLogger.detachAndStopAllAppenders()
-
 
     val consoleAppender = ConsoleAppender<ILoggingEvent>().apply {
         setContext(context)
         name = "STDOUT"
-        
+
         encoder = PatternLayoutEncoder().apply {
             setContext(context)
             pattern = "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
             start()
         }
-        
+
         start()
     }
-    
+
     rootLogger.apply {
-        level = ch.qos.logback.classic.Level.INFO
+        level = ch.qos.logback.classic.Level.DEBUG
         addAppender(consoleAppender)
     }
+}
+
+private fun makeJwkProvider(jwksUrl: String): JwkProvider {
+    return UrlJwkProvider(URI(jwksUrl).toURL())
 }

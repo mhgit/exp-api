@@ -25,6 +25,7 @@ val logbackVersion = "1.5.13"
 val koinVersion = "4.1.0-RC1"
 val ktorVersion = "3.1.3"
 val kotlinVersion = "2.1.21"
+val auth0_jwks_version = "0.22.1"
 
 
 val mockkVersion = "1.14.2"
@@ -43,18 +44,25 @@ dependencies {
     implementation("io.ktor:ktor-server-openapi")
     implementation("io.ktor:ktor-server-swagger")
     implementation("io.ktor:ktor-server-config-yaml")
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-client-json")
+
 
 
     implementation("io.insert-koin:koin-ktor")
     implementation("io.insert-koin:koin-logger-slf4j")
     implementation("com.typesafe:config:1.4.3")
+    implementation("javax.ws.rs:javax.ws.rs-api:2.1.1")
 
 
-    // Ktor security
+
+    // Ktor / security
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
-    implementation("io.ktor:ktor-server-sessions")
-    implementation("org.mindrot:jbcrypt:0.4")
+    implementation("org.keycloak:keycloak-admin-client:22.0.5")
+    implementation("com.auth0:jwks-rsa:$auth0_jwks_version")
+
 
 
     // Serialization
@@ -89,7 +97,11 @@ dependencies {
     testImplementation("io.ktor:ktor-client-content-negotiation")
     testImplementation("io.ktor:ktor-serialization-kotlinx-json")
 
+    // ... other dependencies ...
 
+    // Auth0 JWT for testing
+    testImplementation("com.auth0:java-jwt:4.4.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 
 tasks.test {

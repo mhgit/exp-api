@@ -1,19 +1,20 @@
-# Eagle Bank API
+## Eagle Bank API
 
 This project provides a foundational API for a banking application, built with Kotlin and Ktor. It demonstrates core backend functionalities, including user management with persistence, request validation, and JWT-based authentication.
 
 ## Table of Contents
 
 - [Features](#features)
+- [Planning](#planning)
 - [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Running the Application](#running-the-application)
+- [Installation and Setup](#installation-and-setup)
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
 - [Configuration](#configuration)
 - [Future Considerations](#future-considerations)
 - [Contributing](#contributing)
 - [License](#license)
+- [Documentation](#documentation)
 
 ## Features
 
@@ -25,6 +26,19 @@ This project provides a foundational API for a banking application, built with K
 -   **Dependency Injection:** Managed with Koin for easy service resolution and testability.
 -   **Swagger/OpenAPI:** Automatic API documentation generation for easy exploration and testing of endpoints.
 
+## Planning
+
+The project follows a structured development plan with prioritized tasks across multiple areas:
+
+- **Authentication & Security:** Keycloak integration, token validation, role-based access control
+- **Infrastructure:** AWS setup, edge protection, monitoring & operations
+- **User Management:** Data model updates, API endpoint implementation
+- **Account Management:** Account creation, retrieval, updates, and deletion
+- **Testing:** Integration tests, security testing, load testing
+- **Documentation:** Setup guides, API documentation, deployment guidelines
+
+For a detailed breakdown of planned tasks and their current status, see the [Planning List](PlanningList.md).
+
 ## Technologies Used
 
 *   **Kotlin:** A modern, concise, and safe programming language for JVM.
@@ -35,45 +49,151 @@ This project provides a foundational API for a banking application, built with K
 *   **JUnit 5:** Testing framework.
 *   **MockK:** Mocking library for Kotlin.
 
-## Installation
+## Installation and Setup
 
-To get started with the project, follow these steps:
+For detailed installation and setup instructions, please refer to the [Setup Guide](docs/SETUP.md) in the docs folder.
+This guide includes:
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/eagle-bank-api.git
-   cd eagle-bank-api
-   ```
+- Step-by-step installation instructions
+- Configuration details
+- Keycloak setup and usage
+- Authentication information
+- Test user credentials
 
-2. Setup the Gradle Wrapper (if not already present):
-   ```bash
-   gradle wrapper
-   ```
+The setup process involves:
 
-3. Start the application:
-   ```bash
-   ./gradlew run
-   ```
+1. Cloning the repository and setting up the Gradle wrapper
+2. Configuring the application using HOCON configuration files
+3. Setting up Keycloak using the provided scripts:
+    - `./scripts/start-keycloak.sh` - Starts the Keycloak server
+    - `./scripts/setup-keycloak-realm.sh` - Configures the realm and resources
+    - `./scripts/stop-keycloak-server.sh` - Stops the Keycloak server
 
-## Configuration
+## Architecture
 
-The application uses HOCON configuration format with the following hierarchy:
+The application follows a clean architecture pattern with distinct layers:
 
-1. Default configuration is embedded in `src/main/resources/application.conf`
-2. Environment-specific configuration should be placed in:
-   - Development: `./config/application-dev.conf`
-   - Production: `./config/application-prod.conf`
+```mermaid
+graph TD
+    R[Routes]
+    DTO[DTOs]
+    M[Mappers]
+    DM[Domain Models]
+    RI[Repository Interfaces]
+    RE[Repository Implementations]
+    E[Entities]
+    DB[(Database)]
 
-A template configuration file is provided at `./config/application.conf.template`. Copy this file
-to create your environment-specific configuration:
+    R --> DTO
+    DTO --> M
+    M --> DM
+    DM --> RI
+    RI --> RE
+    RE --> E
+    E --> DB
 
-Key configuration parameters include:
-- Database connection settings
-- JWT authentication configuration
-- Server port and host settings
-- Logging configuration
+    subgraph Presentation\ Layer
+        R
+        DTO
+        M
+    end
 
-⚠️ **Important**: Environment-specific configuration files contain sensitive information and should never be committed to version control.
-A full discussion around password vaults etc will be required before this example is deployed.
+    subgraph Domain\ Layer
+        DM
+        RI
+    end
 
-Note: For containerized deployments, configuration can be provided through environment variables that override the corresponding HOCON settings.
+    subgraph Infrastructure\ Layer
+        RE
+        E
+        DB
+    end
+
+    style Presentation\ Layer fill:#f9f,stroke:#333,stroke-width:4px
+    style Domain\ Layer fill:#bbf,stroke:#333,stroke-width:4px
+    style Infrastructure\ Layer fill:#bfb,stroke:#333,stroke-width:4px
+```
+
+
+### Layer Responsibilities
+
+- **Presentation Layer**
+  - Routes: Handle HTTP requests and responses
+  - DTOs: Data Transfer Objects for API requests/responses
+  - Mappers: Convert between DTOs and Domain Models
+
+- **Domain Layer**
+  - Domain Models: Core business entities
+  - Repository Interfaces: Define data access contracts
+
+- **Infrastructure Layer**
+  - Repository Implementations: Concrete data access logic
+  - Entities: Database model representations
+  - Database: Actual data storage
+
+### Data Flow
+
+1. HTTP Request → Route
+2. Route receives DTO
+3. Mapper converts DTO to Domain Model
+4. Domain Layer processes business logic
+5. Repository Interface defines data access
+6. Repository Implementation handles persistence
+7. Entity maps to database structure
+8. Response flows back through the layers
+
+This architecture ensures:
+- Separation of concerns
+- Domain logic isolation
+- Infrastructure independence
+- Testability
+- Maintainability
+
+## Authentication with Keycloak
+
+The application uses Keycloak for authentication and user management. Below is a diagram showing how API calls are
+intercepted and routed through Keycloak:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as Eagle Bank API
+    participant Auth as Authentication Middleware
+    participant Protected as Protected Endpoints
+    participant KC as Keycloak Server
+
+    Client->>KC: 1. Authenticate (username/password)
+    KC-->>Client: 2. Return JWT token
+    Client->>API: 3. API request with JWT token
+    API->>Auth: 4. Intercept request
+    Auth->>KC: 5. Validate token (using JWK)
+    KC-->>Auth: 6. Token validation result
+
+    alt Valid Token
+        Auth->>Protected: 7a. Route to protected endpoint
+        Protected-->>Client: 8a. Return response
+    else Invalid Token
+        Auth-->>Client: 7b. Return 401 Unauthorized
+    end
+```
+
+### Why Keycloak?
+
+There are several advantages to using Keycloak over implementing custom authentication:
+
+1. **Centralized Identity Management** - Single source of truth for user identities across multiple applications
+2. **Industry-Standard Security** - Implements OAuth 2.0 and OpenID Connect protocols
+3. **Rich Feature Set** - User federation, social login, multi-factor authentication, and more
+4. **Reduced Development Effort** - No need to implement complex security features from scratch
+5. **Delegation of Security Concerns** - Security experts maintain Keycloak, reducing the risk of security
+   vulnerabilities
+
+## Documentation
+
+Additional documentation is available in the `docs` folder:
+
+- [Setup Guide](docs/SETUP.md) - Detailed instructions for setting up and configuring the project
+- [Keycloak Mapper Guide](docs/README-keycloak-mapper.md) - Guide for finding and checking the audience mapper in the
+  Keycloak admin UI
+
+For development planning and roadmap, see the [Planning List](PlanningList.md).
