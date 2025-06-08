@@ -73,10 +73,18 @@ The project uses Keycloak as the authentication server. Three scripts are provid
    This script will:
     - Create the `eagle-bank` realm if it doesn't exist
     - Set up the `eagle-bank-api` client
-    - Create required roles (`user`, `admin`, `account-manager`)
     - Create a test user with username: `test-user` and password: `test123`
 
-3. `./scripts/stop-keycloak-server.sh` - Stops the Keycloak server
+3. `./scripts/setup-keycloak-roles.sh` - Sets up roles and role mappings in Keycloak
+   ```bash
+   ./scripts/setup-keycloak-roles.sh
+   ```
+   This script will:
+   - Create the required roles (`user`, `admin`, `account-manager`)
+   - Add a realm roles mapper to include roles in the JWT token
+   - Assign all three roles to the test user
+
+4. `./scripts/stop-keycloak-server.sh` - Stops the Keycloak server
    ```bash
    ./scripts/stop-keycloak-server.sh
    ```

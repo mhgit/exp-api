@@ -67,7 +67,9 @@ class UsersRouteTest : KoinTest {
                         .build()
                 )
                 validate { credential ->
+                    // Check that the email claim is not empty
                     if (credential.payload.getClaim("email").asString().isNotEmpty()) {
+                        // For testing purposes, we'll accept all tokens with a valid email
                         JWTPrincipal(credential.payload)
                     } else null
                 }
@@ -103,9 +105,9 @@ class UsersRouteTest : KoinTest {
                     county = "Testshire",
                     postcode = "TE1 1ST"
                 ),
-                phoneNumber = "+44-1234-5678",
+                phoneNumber = "+441234567",
                 email = "test@example.com",
-                keycloakId = "test-keycloak-id",
+                keycloakId = "test-user",
                 createdTimestamp = Instant.now().toString(),
                 updatedTimestamp = Instant.now().toString()
             )
@@ -212,5 +214,82 @@ class UsersRouteTest : KoinTest {
             bearerAuth(testToken)
         }
         assertEquals(HttpStatusCode.OK, response.status)
+    }
+
+    @Test
+    @DisplayName("GET /users/{id} with non-existent ID should return Not Found")
+    fun testGetUserById_withNonExistentId_returnsNotFound() = runUserTestApplication { client ->
+        val nonExistentId = "usr-nonexistent"
+        val response = client.get("$USERS_ENDPOINT/$nonExistentId") {
+            bearerAuth(testToken)
+        }
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    @DisplayName("PUT /users/{id} with non-existent ID should return Not Found")
+    fun testUpdateUser_withNonExistentId_returnsNotFound() = runUserTestApplication { client ->
+        val nonExistentId = "usr-nonexistent"
+        val response = client.put("$USERS_ENDPOINT/$nonExistentId") {
+            bearerAuth(testToken)
+            contentType(ContentType.Application.Json)
+            setBody(
+                """
+                {
+                    "name": "Updated Name",
+                    "address": {
+                        "line1": "Updated Line 1",
+                        "town": "Updated Town",
+                        "county": "Updated County",
+                        "postcode": "UP1 1ST"
+                    },
+                    "phoneNumber": "+449876543",
+                    "email": "updated@example.com"
+                }
+            """.trimIndent()
+            )
+        }
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    @DisplayName("DELETE /users/{id} with non-existent ID should return Not Found for admin users")
+    fun testDeleteUser_withNonExistentId_returnsNotFound() = runUserTestApplication { client ->
+        val nonExistentId = "usr-nonexistent"
+        val adminToken = createAdminToken()
+        val response = client.delete("$USERS_ENDPOINT/$nonExistentId") {
+            bearerAuth(adminToken)
+        }
+        assertEquals(HttpStatusCode.NotFound, response.status)
+    }
+
+    @Test
+    @DisplayName("DELETE /users/{id} with existing ID should return Forbidden for non-admin users")
+    fun testDeleteUser_withExistingId_returnsForbiddenForNonAdmin() = runUserTestApplication { client ->
+        val existingId = "usr-test123456"
+        val response = client.delete("$USERS_ENDPOINT/$existingId") {
+            bearerAuth(testToken) // Using non-admin token
+        }
+        assertEquals(HttpStatusCode.Forbidden, response.status)
+    }
+
+    @Test
+    @DisplayName("DELETE /users/{id} with non-existent ID should return Forbidden for non-admin users")
+    fun testDeleteUser_withNonExistentId_returnsForbiddenForNonAdmin() = runUserTestApplication { client ->
+        val nonExistentId = "usr-nonexistent"
+        val response = client.delete("$USERS_ENDPOINT/$nonExistentId") {
+            bearerAuth(testToken) // Using non-admin token
+        }
+        assertEquals(HttpStatusCode.Forbidden, response.status)
+    }
+
+    // Helper function to create an admin token for testing
+    private fun createAdminToken(): String {
+        return JWT.create()
+            .withIssuer("http://localhost:8082/auth/realms/eagle-bank")
+            .withSubject("admin-user")
+            .withClaim("email", "admin@example.com")
+            .withClaim("realm_access", mapOf("roles" to listOf("admin")))
+            .sign(Algorithm.none())
     }
 }
