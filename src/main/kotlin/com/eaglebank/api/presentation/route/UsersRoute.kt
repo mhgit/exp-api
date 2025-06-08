@@ -99,22 +99,22 @@ fun Route.usersRoute() {
                 }
             }
 
-            // PUT user by ID - User can update their own user, admin and account manager can update any user
-            put("{id}") {
+            // PATCH user by ID - User can update their own user, admin and account manager can update any user
+            patch("{id}") {
                 val id = call.parameters["id"]
                 logger.info("Received update user request for ID: $id")
 
                 if (id == null || !id.matches(Regex("^usr-[A-Za-z0-9]+$"))) {
                     logger.warn("Invalid user ID format: $id")
                     call.respond(HttpStatusCode.BadRequest, mapOf("message" to "Invalid user ID format"))
-                    return@put
+                    return@patch
                 }
 
                 val existingUser = userRepository.getUserById(id)
                 if (existingUser == null) {
                     logger.warn("User not found with ID: $id")
                     call.respond(HttpStatusCode.NotFound, mapOf("message" to "User not found"))
-                    return@put
+                    return@patch
                 }
 
                 // Check if the user has permission to update this user
@@ -130,7 +130,7 @@ fun Route.usersRoute() {
                         HttpStatusCode.Forbidden,
                         mapOf("message" to "Access denied: Insufficient permissions")
                     )
-                    return@put
+                    return@patch
                 }
 
                 val request = call.receive<UpdateUserRequest>()

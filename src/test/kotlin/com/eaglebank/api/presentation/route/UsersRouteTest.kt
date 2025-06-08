@@ -227,10 +227,10 @@ class UsersRouteTest : KoinTest {
     }
 
     @Test
-    @DisplayName("PUT /users/{id} with non-existent ID should return Not Found")
+    @DisplayName("PATCH /users/{id} with non-existent ID should return Not Found")
     fun testUpdateUser_withNonExistentId_returnsNotFound() = runUserTestApplication { client ->
         val nonExistentId = "usr-nonexistent"
-        val response = client.put("$USERS_ENDPOINT/$nonExistentId") {
+        val response = client.patch("$USERS_ENDPOINT/$nonExistentId") {
             bearerAuth(testToken)
             contentType(ContentType.Application.Json)
             setBody(
