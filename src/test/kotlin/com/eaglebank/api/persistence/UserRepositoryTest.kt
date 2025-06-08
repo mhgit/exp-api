@@ -49,6 +49,7 @@ class UserRepositoryTest {
 
     @BeforeEach
     fun setup() {
+        @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
         Dispatchers.setMain(testDispatcher)
 
         // Set up in-memory H2 database
@@ -75,6 +76,7 @@ class UserRepositoryTest {
 
     @AfterEach
     fun tearDown() {
+        @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
         Dispatchers.resetMain()
 
         transaction {
