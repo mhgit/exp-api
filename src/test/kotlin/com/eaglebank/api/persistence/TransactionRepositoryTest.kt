@@ -184,4 +184,50 @@ class TransactionRepositoryTest {
         // Then
         assertTrue(transactions.isEmpty())
     }
+
+    @Test
+    fun `should create and retrieve multiple transactions for an account`() = runBlocking {
+        // Given
+        val accountNumber = "98765432"
+        val transactionIds = mutableListOf<String>()
+        val transactionCount = 5
+
+        // When - Create 5 transactions
+        for (i in 1..transactionCount) {
+            val transaction = transactionRepository.createTransaction(
+                testTransaction.copy(
+                    id = "txn-multi-${System.currentTimeMillis()}-$i",
+                    accountNumber = accountNumber,
+                    amount = i * 100.0,
+                    reference = "Test transaction $i"
+                )
+            )
+            transactionIds.add(transaction.id)
+        }
+
+        // Then - Retrieve and verify all transactions
+        val retrievedTransactions = transactionRepository.getTransactionsByAccountNumber(accountNumber)
+
+        // Verify count
+        assertEquals(
+            transactionCount,
+            retrievedTransactions.size,
+            "Should retrieve exactly $transactionCount transactions"
+        )
+
+        // Verify all transaction IDs are present
+        transactionIds.forEach { id ->
+            assertTrue(retrievedTransactions.any { it.id == id }, "Transaction with ID $id should be retrieved")
+        }
+
+        // Verify transaction details
+        retrievedTransactions.forEachIndexed { index, transaction ->
+            val expectedId = transactionIds[index]
+            val retrievedTransaction = retrievedTransactions.find { it.id == expectedId }
+
+            assertNotNull(retrievedTransaction, "Transaction with ID $expectedId should exist")
+            assertEquals(accountNumber, retrievedTransaction?.accountNumber, "Account number should match")
+            assertEquals(testTransaction.type, retrievedTransaction?.type, "Transaction type should match")
+        }
+    }
 }

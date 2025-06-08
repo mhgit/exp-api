@@ -134,11 +134,11 @@
 - [x] PATCH /v1/accounts/{accountNumber} - Update account by account number
 - [x] DELETE /v1/accounts/{accountNumber} - Delete account by account number
 
-### Transaction APIs (Pending)
+### Transaction APIs (Implemented)
 
-- [ ] POST /v1/accounts/{accountNumber}/transactions - Create a transaction
-- [ ] GET /v1/accounts/{accountNumber}/transactions - List transactions
-- [ ] GET /v1/accounts/{accountNumber}/transactions/{transactionId} - Fetch transaction by ID
+- [x] POST /v1/accounts/{accountNumber}/transactions - Create a transaction
+- [x] GET /v1/accounts/{accountNumber}/transactions - List transactions
+- [x] GET /v1/accounts/{accountNumber}/transactions/{transactionId} - Fetch transaction by ID
 
 ## Future Considerations
 - [ ] Implement audit logging with Keycloak events

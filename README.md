@@ -342,3 +342,62 @@ Additional documentation is available in the `docs` folder:
 - [Accounts System](docs/Accounts_System.md) - Documentation of the bank account management system implementation
 
 For development planning and roadmap, see the [Planning List](PlanningList.md).
+
+## Potential Improvements
+
+### Transaction and Balance Handling
+
+1. **Decimal Precision**: Replace `Double` with `BigDecimal` for all monetary values to prevent rounding
+   errors [[1]](https://medium.com/@jecky999/formatting-currency-in-kotlin-locale-aware-approach-for-global-apps-1a4038a4489d).
+   This is especially critical for:
+    - Account balances
+    - Transaction amounts
+    - Currency conversion calculations
+
+2. **Transaction Immutability**:
+    - Implement database-level constraints to prevent modifications of transaction records
+    - Select something like Quantum Ledger Database (QLDB) as the transaction log? Transparent, immutable,
+      cryptographically verifiable transaction log. Too expensive?
+    - Add version control for account balances
+    - Implement event sourcing pattern for complete transaction history
+    - Add double-entry accounting system for better audit trails
+
+3. **Transaction Status Tracking**:
+    - Add transaction status lifecycle (PENDING, COMPLETED, FAILED, REVERSED)
+    - Include completion timestamps
+    - Implement transaction reconciliation processes
+
+4. **Performance Optimization**:
+    - Add appropriate database indexes for frequent queries
+    - Implement caching strategies for account balances
+    - Consider using batch processing for high-volume transactions
+
+5. **Audit and Compliance**:
+    - Implement comprehensive transaction logging
+    - Add support for regulatory reporting
+    - Include transaction categorization for analysis
+
+6. **Currency Support**:
+    - Add multi-currency support
+    - Implement exchange rate management
+    - Handle currency conversion fees
+
+7. **Error Handling**:
+    - Implement robust error recovery mechanisms
+    - Add transaction rollback support
+    - Include detailed error logging
+
+8. **Security Enhancements**:
+    - Add transaction amount limits
+    - Implement fraud detection mechanisms
+    - Add additional authentication for large transactions
+
+9. **API Improvements**:
+    - Add bulk transaction support
+    - Implement transaction scheduling
+    - Add transaction search and filtering capabilities
+
+10. **Monitoring and Alerts**:
+    - Add balance threshold alerts
+    - Implement transaction monitoring for suspicious activity
+    - Add performance monitoring for transaction processing
