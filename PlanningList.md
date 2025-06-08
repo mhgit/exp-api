@@ -15,7 +15,7 @@
 - [x] Add Keycloak dependencies to the project
 - [x] Configure Keycloak adapter in the application
 - [x] Implement token validation middleware
-- [ ] Map Keycloak roles to application permissions
+- [x] Map Keycloak roles to application permissions
 - [x] Add Keycloak user ID to User entity
 - [ ] Implement token introspection
 - [x] Set up role-based access control (RBAC)
@@ -66,25 +66,29 @@
 
 ## Account Management
 ### Account Creation (/v1/accounts POST)
-- [ ] Implement account creation endpoint
-- [ ] Add validation for CreateBankAccountRequest
-- [ ] Implement account number generation
+
+- [x] Implement account creation endpoint
+- [x] Add validation for CreateBankAccountRequest
+- [x] Implement account number generation
 - [ ] Add initial balance handling
 
 ### Account Retrieval
-- [ ] Implement GET /v1/accounts endpoint
-- [ ] Implement GET /v1/accounts/{accountNumber}
+
+- [x] Implement GET /v1/accounts endpoint
+- [x] Implement GET /v1/accounts/{accountNumber}
 - [ ] Add pagination for account listing
 - [ ] Implement filtering and sorting options
 
 ### Account Updates
-- [ ] Implement PATCH /v1/accounts/{accountNumber}
-- [ ] Add validation for UpdateBankAccountRequest
-- [ ] Implement partial updates
+
+- [x] Implement PATCH /v1/accounts/{accountNumber}
+- [x] Add validation for UpdateBankAccountRequest
+- [x] Implement partial updates
 - [ ] Add modification history tracking
 
 ### Account Deletion
-- [ ] Implement DELETE /v1/accounts/{accountNumber}
+
+- [x] Implement DELETE /v1/accounts/{accountNumber}
 - [ ] Add soft delete functionality
 - [ ] Implement account closure process
 - [ ] Add deletion verification steps
@@ -116,19 +120,19 @@
 - [x] DELETE /v1/users/{userId} - Delete user by ID
 - [x] GET /v1/users - List all users
 
-### Authentication APIs (Pending)
+### Authentication APIs (Implemented)
 
-- [ ] POST /login - Authenticate user and obtain JWT tokens
-- [ ] POST /refresh-token - Obtain a new access token using a refresh token
-- [ ] GET /protected - Access a protected resource
+- [x] POST /v1/login - Authenticate user and obtain JWT tokens
+- [x] POST /v1/refresh-token - Obtain a new access token using a refresh token
+- [x] GET /v1/protected - Access a protected resource
 
-### Account APIs (Pending)
+### Account APIs (Implemented)
 
-- [ ] POST /v1/accounts - Create a new bank account
-- [ ] GET /v1/accounts - List accounts
-- [ ] GET /v1/accounts/{accountNumber} - Fetch account by account number
-- [ ] PATCH /v1/accounts/{accountNumber} - Update account by account number
-- [ ] DELETE /v1/accounts/{accountNumber} - Delete account by account number
+- [x] POST /v1/accounts - Create a new bank account
+- [x] GET /v1/accounts - List accounts
+- [x] GET /v1/accounts/{accountNumber} - Fetch account by account number
+- [x] PATCH /v1/accounts/{accountNumber} - Update account by account number
+- [x] DELETE /v1/accounts/{accountNumber} - Delete account by account number
 
 ### Transaction APIs (Pending)
 
