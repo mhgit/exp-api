@@ -8,7 +8,8 @@ This project provides a foundational API for a banking application, built with K
 - [Planning](#planning)
 - [Technologies Used](#technologies-used)
 - [Installation and Setup](#installation-and-setup)
-- [API Endpoints](#api-endpoints)
+- [API Implementation Status](#api-implementation-status)
+- [Technical Concerns](#technical-concerns)
 - [Testing](#testing)
 - [Configuration](#configuration)
 - [Future Considerations](#future-considerations)
@@ -156,6 +157,71 @@ This architecture ensures:
 - Infrastructure independence
 - Testability
 - Maintainability
+
+## API Implementation Status
+
+The following table shows the current implementation status of the API endpoints defined in the OpenAPI specification:
+
+### Implemented APIs
+
+| Endpoint           | Method | Description       | Status        |
+|--------------------|--------|-------------------|---------------|
+| /v1/users          | POST   | Create a new user | ✅ Implemented |
+| /v1/users/{userId} | GET    | Fetch user by ID  | ✅ Implemented |
+| /v1/users/{userId} | PATCH  | Update user by ID | ✅ Implemented |
+| /v1/users/{userId} | DELETE | Delete user by ID | ✅ Implemented |
+| /v1/users          | GET    | List all users    | ✅ Implemented |
+
+### Pending APIs
+
+| Endpoint                                                  | Method | Description                                     | Status    |
+|-----------------------------------------------------------|--------|-------------------------------------------------|-----------|
+| /login                                                    | POST   | Authenticate user and obtain JWT tokens         | ⏳ Pending |
+| /refresh-token                                            | POST   | Obtain a new access token using a refresh token | ⏳ Pending |
+| /protected                                                | GET    | Access a protected resource                     | ⏳ Pending |
+| /v1/accounts                                              | POST   | Create a new bank account                       | ⏳ Pending |
+| /v1/accounts                                              | GET    | List accounts                                   | ⏳ Pending |
+| /v1/accounts/{accountNumber}                              | GET    | Fetch account by account number                 | ⏳ Pending |
+| /v1/accounts/{accountNumber}                              | PATCH  | Update account by account number                | ⏳ Pending |
+| /v1/accounts/{accountNumber}                              | DELETE | Delete account by account number                | ⏳ Pending |
+| /v1/accounts/{accountNumber}/transactions                 | POST   | Create a transaction                            | ⏳ Pending |
+| /v1/accounts/{accountNumber}/transactions                 | GET    | List transactions                               | ⏳ Pending |
+| /v1/accounts/{accountNumber}/transactions/{transactionId} | GET    | Fetch transaction by ID                         | ⏳ Pending |
+
+For a detailed description of each API endpoint, refer to the OpenAPI specification in
+`src/main/resources/api-contract.yml`.
+
+## Technical Concerns
+
+### SIEM Logging
+
+Security Information and Event Management (SIEM) logging is essential for monitoring and analyzing security events.
+Implementation considerations include:
+
+- Integration with a SIEM solution (e.g., Splunk, ELK Stack)
+- Structured logging format for security events
+- Logging of authentication attempts, access control decisions, and sensitive operations
+- Compliance with regulatory requirements for log retention and protection
+
+### OpenTelemetry
+
+OpenTelemetry provides a standardized way to collect and export telemetry data:
+
+- Distributed tracing across microservices
+- Metrics collection for performance monitoring
+- Context propagation between services
+- Integration with observability backends (e.g., Jaeger, Prometheus)
+
+### Monitoring
+
+A comprehensive monitoring strategy should include:
+
+- Health checks for all services and dependencies
+- Performance metrics (response times, throughput, error rates)
+- Resource utilization (CPU, memory, disk, network)
+- Business metrics (transaction volumes, user activity)
+- Alerting and notification systems for critical issues
+- Dashboards for real-time visibility
 
 ## Authentication with Keycloak
 
