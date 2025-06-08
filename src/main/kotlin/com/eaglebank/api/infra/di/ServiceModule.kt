@@ -3,16 +3,11 @@ package com.eaglebank.api.infra.di
 import com.eaglebank.api.config.DatabaseConfig
 import com.eaglebank.api.config.KeycloakConfig
 import com.eaglebank.api.domain.repository.IBankAccountRepository
+import com.eaglebank.api.domain.repository.ITransactionRepository
 import com.eaglebank.api.domain.repository.IUserRepository
 import com.eaglebank.api.infra.keycloak.KeycloakService
-import com.eaglebank.api.infra.persistence.BankAccountRepository
-import com.eaglebank.api.infra.persistence.BankAccountTable
-import com.eaglebank.api.infra.persistence.UserRepository
-import com.eaglebank.api.infra.persistence.UserTable
-import com.eaglebank.api.infra.validation.BankAccountRequestValidationService
-import com.eaglebank.api.infra.validation.SimpleBankAccountRequestValidationService
-import com.eaglebank.api.infra.validation.SimpleUserRequestValidationService
-import com.eaglebank.api.infra.validation.UserRequestValidationService
+import com.eaglebank.api.infra.persistence.*
+import com.eaglebank.api.infra.validation.*
 import io.ktor.server.config.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -73,7 +68,7 @@ fun createServiceModule(config: ApplicationConfig) = module {
             password = dbConfig.password
         ).also { db ->
             transaction(db) {
-                SchemaUtils.create(UserTable, BankAccountTable)
+                SchemaUtils.create(UserTable, BankAccountTable, TransactionTable)
             }
         }
     }
@@ -98,5 +93,16 @@ fun createServiceModule(config: ApplicationConfig) = module {
     single<BankAccountRequestValidationService> {
         logger.debug("Creating BankAccountRequestValidationService")
         SimpleBankAccountRequestValidationService()
+    }
+
+    single<ITransactionRepository> {
+        logger.debug("Creating TransactionRepository")
+        get<Database>() // Ensure database is initialized
+        TransactionRepository()
+    }
+
+    single<TransactionRequestValidationService> {
+        logger.debug("Creating TransactionRequestValidationService")
+        SimpleTransactionRequestValidationService()
     }
 }

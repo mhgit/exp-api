@@ -48,5 +48,17 @@ data class ValidationDetail(
             message = "Invalid $fieldName format${if (details.isNotEmpty()) ". $details" else ""}",
             type = ValidationType.INVALID_FORMAT.name
         )
+
+        fun invalidValue(fieldName: String, details: String = "") = ValidationDetail(
+            field = fieldName,
+            message = "Invalid $fieldName value${if (details.isNotEmpty()) ". $details" else ""}",
+            type = ValidationType.INVALID_VALUE.name
+        )
+
+        fun insufficientFunds(fieldName: String, details: String = "") = ValidationDetail(
+            field = fieldName,
+            message = "Insufficient funds${if (details.isNotEmpty()) ". $details" else ""}",
+            type = ValidationType.INSUFFICIENT_FUNDS.name
+        )
     }
 }

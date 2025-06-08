@@ -23,7 +23,7 @@ data class BankAccount(
     val sortCode: String,
     val name: String,
     val accountType: String,
-    val balance: Double,
+    val balance: Double,  //TODO.  We should not use a double.  Heck its a demo not a real system.  :-)
     val currency: String,
     val createdTimestamp: Instant,
     val updatedTimestamp: Instant
