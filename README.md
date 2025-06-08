@@ -336,5 +336,9 @@ Additional documentation is available in the `docs` folder:
 - [Setup Guide](docs/SETUP.md) - Detailed instructions for setting up and configuring the project
 - [Keycloak Mapper Guide](docs/README-keycloak-mapper.md) - Guide for finding and checking the audience mapper in the
   Keycloak admin UI
+- [Transaction System](docs/Transaction_System.md) - Documentation of the transaction system implementation
+- [Security System](docs/Security_System.md) - Documentation of the security system implementation
+- [User System](docs/User_System.md) - Documentation of the user management system implementation
+- [Accounts System](docs/Accounts_System.md) - Documentation of the bank account management system implementation
 
 For development planning and roadmap, see the [Planning List](PlanningList.md).
