@@ -8,6 +8,7 @@ import ch.qos.logback.core.ConsoleAppender
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.UrlJwkProvider
 import com.eaglebank.api.infra.di.createServiceModule
+import com.eaglebank.api.presentation.route.authenticationRoutes
 import com.eaglebank.api.presentation.route.usersRoute
 import com.typesafe.config.ConfigFactory
 import io.ktor.serialization.kotlinx.json.*
@@ -92,6 +93,7 @@ fun Application.configureSerialization() {
 fun Application.configureRouting() {
     routing {
         usersRoute()
+        authenticationRoutes()
         swaggerUI(path = "swagger", swaggerFile = "api-contract.yml")
     }
 }
