@@ -5,15 +5,16 @@ This project provides a foundational API for a banking application, built with K
 ## Table of Contents
 
 - [Features](#features)
+- [Planning](#planning)
 - [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Running the Application](#running_the_application)
+- [Installation and Setup](#installation-and-setup)
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
 - [Configuration](#configuration)
 - [Future Considerations](#future-considerations)
 - [Contributing](#contributing)
 - [License](#license)
+- [Documentation](#documentation)
 
 ## Features
 
@@ -25,6 +26,19 @@ This project provides a foundational API for a banking application, built with K
 -   **Dependency Injection:** Managed with Koin for easy service resolution and testability.
 -   **Swagger/OpenAPI:** Automatic API documentation generation for easy exploration and testing of endpoints.
 
+## Planning
+
+The project follows a structured development plan with prioritized tasks across multiple areas:
+
+- **Authentication & Security:** Keycloak integration, token validation, role-based access control
+- **Infrastructure:** AWS setup, edge protection, monitoring & operations
+- **User Management:** Data model updates, API endpoint implementation
+- **Account Management:** Account creation, retrieval, updates, and deletion
+- **Testing:** Integration tests, security testing, load testing
+- **Documentation:** Setup guides, API documentation, deployment guidelines
+
+For a detailed breakdown of planned tasks and their current status, see the [Planning List](PlanningList.md).
+
 ## Technologies Used
 
 *   **Kotlin:** A modern, concise, and safe programming language for JVM.
@@ -35,120 +49,29 @@ This project provides a foundational API for a banking application, built with K
 *   **JUnit 5:** Testing framework.
 *   **MockK:** Mocking library for Kotlin.
 
-## Installation
+## Installation and Setup
 
-To get started with the project, follow these steps:
+For detailed installation and setup instructions, please refer to the [Setup Guide](docs/SETUP.md) in the docs folder.
+This guide includes:
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/eagle-bank-api.git
-   cd eagle-bank-api
-   ```
+- Step-by-step installation instructions
+- Configuration details
+- Keycloak setup and usage
+- Authentication information
+- Test user credentials
 
-2. Setup the Gradle Wrapper (if not already present):
-   ```bash
-   gradle wrapper
-   ```
+The setup process involves:
 
-3. Start the application:
-   ```bash
-   ./gradlew run
-   ```
-
-## Configuration
-
-The application uses HOCON configuration format with the following hierarchy:
-
-1. Default configuration is embedded in `src/main/resources/application.conf`
-2. Environment-specific configuration should be placed in:
-   - Development: `./config/application-dev.conf`
-   - Production: `./config/application-prod.conf`
-
-A template configuration file is provided at `./config/application.conf.template`. Copy this file
-to create your environment-specific configuration:
-
-Key configuration parameters include:
-- Database connection settings
-- JWT authentication configuration
-- Server port and host settings
-- Logging configuration
-
-⚠️ **Important**: Environment-specific configuration files contain sensitive information and should never be committed to version control.
-A full discussion around password vaults etc will be required before this example is deployed.
-
-Note: For containerized deployments, configuration can be provided through environment variables that override the corresponding HOCON settings.
-
-## Keycloak Setup and Usage
-
-### Authentication Server Management
-
-The project uses Keycloak as the authentication server. Three scripts are provided to manage the Keycloak instance:
-
-1. `./scripts/start-keycloak.sh` - Downloads (if needed) and starts the Keycloak server
-   ```bash
-   ./scripts/start-keycloak.sh
-   ```
-   This script will:
-   - Download Keycloak 22.0.5 if not present (stored in `./infrastructure/keycloak`)
-   - Extract it to `./infrastructure/keycloak/keycloak-22.0.5`
-   - Start Keycloak on port 8082 (HTTP) and 9002 (management)
-
-2. `./scripts/setup-keycloak-realm.sh` - Configures the Keycloak realm and resources
-   ```bash
-   ./scripts/setup-keycloak-realm.sh
-   ```
-   This script will:
-   - Create the `eagle-bank` realm if it doesn't exist
-   - Set up the `eagle-bank-api` client
-   - Create required roles (`user`, `admin`, `account-manager`)
-   - Create a test user with username: `test-user` and password: `test123`
-
-3. `./scripts/stop-keycloak-server.sh` - Stops the Keycloak server
-   ```bash
-   ./scripts/stop-keycloak-server.sh
-   ```
-
-### Test User Login
-
-To access the test user account:
-1. Go to: http://localhost:8082/auth/realms/eagle-bank/account
-2. Login with:
-   - Username: `test-user`
-   - Password: `test123`
-
-Note: Make sure to use the specific URL above, as it directs to the correct realm (`eagle-bank`). 
-If you try to log in through the admin console, it will attempt to authenticate against the master realm instead.
-
-### Development Authentication
-
-To obtain an authentication token for development/testing:
-```bash curl -X POST "[http://localhost:8082/auth/realms/eagle-bank/protocol/openid-connect/token](http://localhost:8082/auth/realms/eagle-bank/protocol/openid-connect/token)"
--H "Content-Type: application/x-www-form-urlencoded"
--d "client_id=eagle-bank-api"
--d "username=test-user"
--d "password=test123"
--d "grant_type=password"
-```
-
-The response will include an access token that can be used in subsequent API calls:
-
-```bash 
-curl -H "Authorization: Bearer <your-token>" [http://localhost:8080/api/v1/your-endpoint](http://localhost:8080/api/v1/your-endpoint)
-```
-
-### Keycloak Admin Console
-
-The Keycloak admin console can be accessed at:
-- URL: http://localhost:8082/auth/admin
-- Username: admin
-- Password: admin
-
-Remember to select the "eagle-bank" realm (top-left dropdown) when managing resources for this project.
+1. Cloning the repository and setting up the Gradle wrapper
+2. Configuring the application using HOCON configuration files
+3. Setting up Keycloak using the provided scripts:
+    - `./scripts/start-keycloak.sh` - Starts the Keycloak server
+    - `./scripts/setup-keycloak-realm.sh` - Configures the realm and resources
+    - `./scripts/stop-keycloak-server.sh` - Stops the Keycloak server
 
 ## Architecture
 
 The application follows a clean architecture pattern with distinct layers:
-he application follows a clean architecture pattern with distinct layers:
 
 ```mermaid
 graph TD
@@ -169,26 +92,26 @@ graph TD
     RE --> E
     E --> DB
 
-    subgraph "Presentation Layer"
+    subgraph Presentation\ Layer
         R
         DTO
         M
     end
-    
-    subgraph "Domain Layer"
+
+    subgraph Domain\ Layer
         DM
         RI
     end
-    
-    subgraph "Infrastructure Layer"
+
+    subgraph Infrastructure\ Layer
         RE
         E
         DB
     end
 
-    style "Presentation Layer" fill:#f9f,stroke:#333,stroke-width:4px
-    style "Domain Layer" fill:#bbf,stroke:#333,stroke-width:4px
-    style "Infrastructure Layer" fill:#bfb,stroke:#333,stroke-width:4px
+    style Presentation\ Layer fill:#f9f,stroke:#333,stroke-width:4px
+    style Domain\ Layer fill:#bbf,stroke:#333,stroke-width:4px
+    style Infrastructure\ Layer fill:#bfb,stroke:#333,stroke-width:4px
 ```
 
 
@@ -225,3 +148,52 @@ This architecture ensures:
 - Infrastructure independence
 - Testability
 - Maintainability
+
+## Authentication with Keycloak
+
+The application uses Keycloak for authentication and user management. Below is a diagram showing how API calls are
+intercepted and routed through Keycloak:
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as Eagle Bank API
+    participant Auth as Authentication Middleware
+    participant Protected as Protected Endpoints
+    participant KC as Keycloak Server
+
+    Client->>KC: 1. Authenticate (username/password)
+    KC-->>Client: 2. Return JWT token
+    Client->>API: 3. API request with JWT token
+    API->>Auth: 4. Intercept request
+    Auth->>KC: 5. Validate token (using JWK)
+    KC-->>Auth: 6. Token validation result
+
+    alt Valid Token
+        Auth->>Protected: 7a. Route to protected endpoint
+        Protected-->>Client: 8a. Return response
+    else Invalid Token
+        Auth-->>Client: 7b. Return 401 Unauthorized
+    end
+```
+
+### Why Keycloak?
+
+There are several advantages to using Keycloak over implementing custom authentication:
+
+1. **Centralized Identity Management** - Single source of truth for user identities across multiple applications
+2. **Industry-Standard Security** - Implements OAuth 2.0 and OpenID Connect protocols
+3. **Rich Feature Set** - User federation, social login, multi-factor authentication, and more
+4. **Reduced Development Effort** - No need to implement complex security features from scratch
+5. **Delegation of Security Concerns** - Security experts maintain Keycloak, reducing the risk of security
+   vulnerabilities
+
+## Documentation
+
+Additional documentation is available in the `docs` folder:
+
+- [Setup Guide](docs/SETUP.md) - Detailed instructions for setting up and configuring the project
+- [Keycloak Mapper Guide](docs/README-keycloak-mapper.md) - Guide for finding and checking the audience mapper in the
+  Keycloak admin UI
+
+For development planning and roadmap, see the [Planning List](PlanningList.md).

@@ -7,9 +7,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.ConsoleAppender
 import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.UrlJwkProvider
-import com.eaglebank.api.config.DatabaseConfig
-import com.eaglebank.api.infra.di.serviceModule
-import com.eaglebank.api.infra.persistence.DatabaseFactory
+import com.eaglebank.api.infra.di.createServiceModule
 import com.eaglebank.api.presentation.route.usersRoute
 import com.typesafe.config.ConfigFactory
 import io.ktor.serialization.kotlinx.json.*
@@ -42,7 +40,7 @@ fun Application.module() {
     val applicationConfig = HoconApplicationConfig(ConfigFactory.load("application-dev.conf"))
 
     install(Koin) {
-        modules(serviceModule)
+        modules(listOf(createServiceModule(applicationConfig)))
     }
 
     install(Authentication) {
@@ -66,37 +64,23 @@ fun Application.module() {
             }
 
             validate { credential ->
-                if (credential.payload.audience.contains(jwtAudience)) {
-                    JWTPrincipal(credential.payload)
-                } else null
+                val logger = LoggerFactory.getLogger("JWTValidation")
+                try {
+                    if (credential.payload.audience.contains(jwtAudience)) {
+                        JWTPrincipal(credential.payload)
+                    } else {
+                        null
+                    }
+                } catch (e: Exception) {
+                    logger.error("Exception during JWT validation", e)
+                    null
+                }
             }
         }
     }
 
     configureRouting()
     configureOpenAPI()
-
-    try {
-        val dbUrl = applicationConfig.property("database.url").getString()
-        val dbDriver = applicationConfig.property("database.driver").getString()
-        val dbUser = applicationConfig.property("database.user").getString()
-        val dbPassword = applicationConfig.property("database.password").getString()
-
-        val dbConfig = DatabaseConfig(
-            url = dbUrl,
-            driver = dbDriver,
-            user = dbUser,
-            password = dbPassword
-        )
-
-        DatabaseFactory.init(dbConfig)
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-        throw e
-    }
-
-
 }
 
 fun Application.configureSerialization() {
@@ -127,18 +111,18 @@ fun Application.configureLogging() {
     val consoleAppender = ConsoleAppender<ILoggingEvent>().apply {
         setContext(context)
         name = "STDOUT"
-        
+
         encoder = PatternLayoutEncoder().apply {
             setContext(context)
             pattern = "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
             start()
         }
-        
+
         start()
     }
-    
+
     rootLogger.apply {
-        level = ch.qos.logback.classic.Level.INFO
+        level = ch.qos.logback.classic.Level.DEBUG
         addAppender(consoleAppender)
     }
 }

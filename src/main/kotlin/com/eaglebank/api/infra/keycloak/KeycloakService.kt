@@ -27,6 +27,17 @@ class KeycloakService(
 
     fun createUser(email: String, firstName: String, lastName: String, password: String): String {
         try {
+            // First check if user already exists
+            val existingUsers = keycloak
+                .realm(realm)
+                .users()
+                .search(email, 0, 1)
+
+            if (existingUsers.isNotEmpty()) {
+                logger.warn("User with email $email already exists in Keycloak")
+                return existingUsers[0].id
+            }
+
             val userRepresentation = UserRepresentation().apply {
                 this.username = email
                 this.email = email
@@ -48,17 +59,25 @@ class KeycloakService(
                 .users()
                 .create(userRepresentation)
 
-            if (response.status != Response.Status.CREATED.statusCode) {
-                throw RuntimeException("Failed to create user in Keycloak. Status: ${response.status}")
-            }
+            when (response.status) {
+                Response.Status.CREATED.statusCode -> {
+                    val locationPath = response.location.path
+                    val userId = locationPath.substring(locationPath.lastIndexOf("/") + 1)
+                    logger.info("Successfully created user in Keycloak with ID: $userId")
+                    return userId
+                }
 
-            // Extract user ID from response
-            val locationPath = response.location.path
-            val userId = locationPath.substring(locationPath.lastIndexOf("/") + 1)
-            
-            logger.info("Successfully created user in Keycloak with ID: $userId")
-            return userId
-            
+                Response.Status.CONFLICT.statusCode -> {
+                    logger.warn("Concurrent attempt to create user with email $email")
+                    // Retry getting the user in case of concurrent creation
+                    val users = keycloak.realm(realm).users().search(email, 0, 1)
+                    return users[0].id
+                }
+
+                else -> {
+                    throw RuntimeException("Failed to create user in Keycloak. Status: ${response.status}")
+                }
+            }
         } catch (e: Exception) {
             logger.error("Failed to create user in Keycloak", e)
             throw RuntimeException("Failed to create user in Keycloak", e)
