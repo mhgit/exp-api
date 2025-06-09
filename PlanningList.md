@@ -9,6 +9,8 @@
 - [x] Configure password policies in Keycloak
 - [ ] Set up email verification flow
 - [ ] Configure Keycloak themes for branded experience
+- [ ] Review integration methods, introduce Fedorated ID and API gateway.
+- [ ] Migrate more concerns away from the microservice.
 
 ### API Integration
 

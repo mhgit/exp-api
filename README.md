@@ -138,7 +138,7 @@ graph TD
 - **Infrastructure Layer**
   - Repository Implementations: Concrete data access logic
   - Entities: Database model representations
-  - Database: Actual data storage
+  - Database: In memory database for prototype.
 
 ### Data Flow
 
@@ -158,72 +158,26 @@ This architecture ensures:
 - Testability
 - Maintainability
 
-## API Implementation Status
-
-The following table shows the current implementation status of the API endpoints defined in the OpenAPI specification:
-
-### Implemented APIs
-
-| Endpoint           | Method | Description       | Status        |
-|--------------------|--------|-------------------|---------------|
-| /v1/users          | POST   | Create a new user | ✅ Implemented |
-| /v1/users/{userId} | GET    | Fetch user by ID  | ✅ Implemented |
-| /v1/users/{userId} | PATCH  | Update user by ID | ✅ Implemented |
-| /v1/users/{userId} | DELETE | Delete user by ID | ✅ Implemented |
-| /v1/users          | GET    | List all users    | ✅ Implemented |
-
-### Pending APIs
-
-| Endpoint                                                  | Method | Description                                     | Status    |
-|-----------------------------------------------------------|--------|-------------------------------------------------|-----------|
-| /login                                                    | POST   | Authenticate user and obtain JWT tokens         | ⏳ Pending |
-| /refresh-token                                            | POST   | Obtain a new access token using a refresh token | ⏳ Pending |
-| /protected                                                | GET    | Access a protected resource                     | ⏳ Pending |
-| /v1/accounts                                              | POST   | Create a new bank account                       | ⏳ Pending |
-| /v1/accounts                                              | GET    | List accounts                                   | ⏳ Pending |
-| /v1/accounts/{accountNumber}                              | GET    | Fetch account by account number                 | ⏳ Pending |
-| /v1/accounts/{accountNumber}                              | PATCH  | Update account by account number                | ⏳ Pending |
-| /v1/accounts/{accountNumber}                              | DELETE | Delete account by account number                | ⏳ Pending |
-| /v1/accounts/{accountNumber}/transactions                 | POST   | Create a transaction                            | ⏳ Pending |
-| /v1/accounts/{accountNumber}/transactions                 | GET    | List transactions                               | ⏳ Pending |
-| /v1/accounts/{accountNumber}/transactions/{transactionId} | GET    | Fetch transaction by ID                         | ⏳ Pending |
+## API Contract
 
 For a detailed description of each API endpoint, refer to the OpenAPI specification in
 `src/main/resources/api-contract.yml`.
 
 ## Technical Concerns
 
-### SIEM Logging
-
-Security Information and Event Management (SIEM) logging is essential for monitoring and analyzing security events.
-Implementation considerations include:
-
-- Integration with a SIEM solution (e.g., Splunk, ELK Stack)
-- Structured logging format for security events
-- Logging of authentication attempts, access control decisions, and sensitive operations
-- Compliance with regulatory requirements for log retention and protection
-
-### OpenTelemetry
-
-OpenTelemetry provides a standardized way to collect and export telemetry data:
-
-- Distributed tracing across microservices
-- Metrics collection for performance monitoring
-- Context propagation between services
-- Integration with observability backends (e.g., Jaeger, Prometheus)
-
-### Monitoring
-
-A comprehensive monitoring strategy should include:
-
-- Health checks for all services and dependencies
-- Performance metrics (response times, throughput, error rates)
-- Resource utilization (CPU, memory, disk, network)
-- Business metrics (transaction volumes, user activity)
-- Alerting and notification systems for critical issues
-- Dashboards for real-time visibility
-
 ## Authentication with Keycloak
+
+The main thrust of this code was just to explore how a API might integrate with [Keycloak](https://www.keycloak.org/).
+The implementation is of the most basic kind.  
+Were it to be developed, some of the functionality should move to an API Gateway for
+instance [Kraken](https://gitlab.com/bensiewert/demo-microservices-with-keycloak-and-krakend)
+This demo does explore using the Keycloak admin API to automate basic Realm, Client, User and Roles setup. The UI is not
+used. A test script is supplied for verification.  
+Role checks are performed in the code or using annotations to protect the route. There are many disadvantages of this
+approach.  
+Its potentially insecure if defects are introduced, a release is required if security models change. Moving that logic
+to an api gateway and simplifying this codebase would bring enhancd clarity, better admin and place the security with a
+dedicated team...among other benefits.
 
 The application uses Keycloak for authentication and user management. Below is a diagram showing how API calls are
 intercepted and routed through Keycloak:
@@ -253,14 +207,14 @@ sequenceDiagram
 
 ### Why Keycloak?
 
-There are several advantages to using Keycloak over implementing custom authentication:
+There are several advantages to using Keycloak over implementing your own custom authentication:
 
 1. **Centralized Identity Management** - Single source of truth for user identities across multiple applications
 2. **Industry-Standard Security** - Implements OAuth 2.0 and OpenID Connect protocols
 3. **Rich Feature Set** - User federation, social login, multi-factor authentication, and more
 4. **Reduced Development Effort** - No need to implement complex security features from scratch
 5. **Delegation of Security Concerns** - Security experts maintain Keycloak, reducing the risk of security
-   vulnerabilities
+   vulnerabilities (note: hence migrating more of the concerns ouside of these microservices)
 
 ### Role-Based Access Control for Preventing IDOR Attacks
 
@@ -329,6 +283,43 @@ Implementation approach:
 By implementing these role-based access controls with Keycloak, the application can effectively prevent IDOR
 vulnerabilities and ensure that users can only access resources they are authorized to view or modify.
 
+### SIEM Logging
+
+Security Information and Event Management (SIEM) logging is essential for monitoring and analyzing security events.
+Implementation considerations include:
+
+**Note** - not implemented for the prototype.
+- Integration with a SIEM solution (e.g., Splunk, ELK Stack)
+- Structured logging format for security events
+- Logging of authentication attempts, access control decisions, and sensitive operations
+- Compliance with regulatory requirements for log retention and protection
+
+### OpenTelemetry
+
+**Note** - not implemented for the prototype.
+
+OpenTelemetry provides a standardized way to collect and export telemetry data:
+
+- Distributed tracing across microservices
+- Metrics collection for performance monitoring
+- Context propagation between services
+- Integration with observability backends (e.g., Jaeger, Prometheus)
+
+### Monitoring
+
+**Note** - not implemented for the prototype.
+
+A comprehensive monitoring strategy should include:
+
+- Health checks for all services and dependencies
+- Performance metrics (response times, throughput, error rates)
+- Resource utilization (CPU, memory, disk, network)
+- Business metrics (transaction volumes, user activity)
+- Alerting and notification systems for critical issues
+- Dashboards for real-time visibility
+
+
+
 ## Documentation
 
 Additional documentation is available in the `docs` folder:
@@ -354,7 +345,7 @@ For development planning and roadmap, see the [Planning List](PlanningList.md).
     - Transaction amounts
     - Currency conversion calculations
 
-2. **Transaction Immutability**:
+2. **Transaction Immutability Ideas**:
     - Implement database-level constraints to prevent modifications of transaction records
     - Select something like Quantum Ledger Database (QLDB) as the transaction log? Transparent, immutable,
       cryptographically verifiable transaction log. Too expensive?
