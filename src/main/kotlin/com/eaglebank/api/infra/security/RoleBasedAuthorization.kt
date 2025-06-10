@@ -109,11 +109,14 @@ fun Route.withRole(role: String, build: Route.() -> Unit): Route {
             RouteSelectorEvaluation.Constant
     })
 
-    route.intercept(ApplicationCallPipeline.Plugins) {
-        if (!RoleBasedAuthorization.hasRole(call, role)) {
-            logger.warn("Access denied: User does not have required role: $role")
-            call.respond(HttpStatusCode.Forbidden, mapOf("message" to "Access denied: Insufficient permissions"))
-            return@intercept finish()
+    // Define a custom plugin
+    createRouteScopedPlugin("RoleCheckPlugin") {
+        onCall { call ->
+            if (!RoleBasedAuthorization.hasRole(call, role)) {
+                logger.warn("Access denied: User does not have required role: $role")
+                call.respond(HttpStatusCode.Forbidden, mapOf("message" to "Access denied: Insufficient permissions"))
+                return@onCall
+            }
         }
     }
 
@@ -137,11 +140,13 @@ fun Route.withAnyRole(vararg roles: String, build: Route.() -> Unit): Route {
             RouteSelectorEvaluation.Constant
     })
 
-    route.intercept(ApplicationCallPipeline.Plugins) {
-        if (!RoleBasedAuthorization.hasAnyRole(call, *roles)) {
-            logger.warn("Access denied: User does not have any of the required roles: ${roles.joinToString()}")
-            call.respond(HttpStatusCode.Forbidden, mapOf("message" to "Access denied: Insufficient permissions"))
-            return@intercept finish()
+    createRouteScopedPlugin("AnyRoleCheckPlugin") {
+        onCall { call ->
+            if (!RoleBasedAuthorization.hasAnyRole(call, *roles)) {
+                logger.warn("Access denied: User does not have any of the required roles: ${roles.joinToString()}")
+                call.respond(HttpStatusCode.Forbidden, mapOf("message" to "Access denied: Insufficient permissions"))
+                return@onCall
+            }
         }
     }
 
